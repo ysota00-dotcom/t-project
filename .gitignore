@@ -1,0 +1,9 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+output/
+knowledge.db
+.ipynb_checkpoints/
+*.png
+algo/
