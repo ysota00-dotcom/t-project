@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Tomomi 法律学習アプリ</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,14 +22,16 @@ body {
 header {
   background: #3d5a80;
   color: white;
-  padding: 14px 24px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-shrink: 0;
+  min-height: 48px;
 }
-header h1 { font-size: 18px; font-weight: bold; }
-header span { font-size: 13px; opacity: 0.75; }
+header h1 { font-size: 16px; font-weight: bold; }
+header span { font-size: 12px; opacity: 0.75; display: none; }
+@media (min-width: 600px) { header span { display: inline; } }
 
 /* ── タブ ── */
 .tabs {
@@ -56,13 +61,138 @@ header span { font-size: 13px; opacity: 0.75; }
 .panel.active { display: flex; flex-direction: column; }
 
 /* ── 問題ライブラリ ── */
+.lib-wrap {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── モバイル：デフォルトはツリー全幅 ── */
+.lib-tree {
+  width: 100%;
+  overflow-y: auto;
+  background: #f8f7f4;
+  padding: 8px 0;
+  flex-shrink: 0;
+}
+.lib-right {
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
+}
+
+/* 章選択後：ツリー非表示、問題リスト全幅 */
+.lib-wrap.show-list .lib-tree { display: none; }
+.lib-wrap.show-list .lib-right { display: flex; }
+
+/* ── PC（600px以上）：常に2カラム ── */
+@media (min-width: 600px) {
+  .lib-tree {
+    width: 240px;
+    min-width: 200px;
+    border-right: 1px solid #ddd;
+  }
+  .lib-right { display: flex; }
+  .lib-wrap.show-list .lib-tree { display: block; }
+}
+
+.tree-book { margin-bottom: 2px; }
+.tree-book-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: #3d5a80;
+  padding: 8px 14px 4px;
+  letter-spacing: 0.03em;
+}
+.tree-part-title {
+  font-size: 11px;
+  color: #888;
+  padding: 4px 14px 2px 20px;
+}
+.tree-chapter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 12px 28px;
+  min-height: 44px;
+  font-size: 13px;
+  color: #444;
+  cursor: pointer;
+  transition: background 0.15s;
+  gap: 8px;
+  border-bottom: 1px solid #f0ede8;
+}
+.tree-chapter:hover { background: #eeeae3; }
+.tree-chapter.active { background: #3d5a80; color: white; }
+.tree-chapter.active .tree-cnt { background: rgba(255,255,255,0.25); color: white; }
+.tree-ch-name { flex: 1; line-height: 1.4; }
+.tree-cnt {
+  font-size: 11px;
+  background: #ddd;
+  color: #666;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.tree-audio-btn {
+  font-size: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  flex-shrink: 0;
+  opacity: 0.5;
+  line-height: 1;
+}
+.tree-audio-btn:hover { opacity: 1; }
+.tree-chapter.active .tree-audio-btn { opacity: 0.85; }
+.audio-to-lib-btn {
+  font-size: 11px;
+  background: none;
+  border: 1px solid #aaa;
+  border-radius: 12px;
+  padding: 3px 10px;
+  cursor: pointer;
+  color: #555;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.audio-to-lib-btn:hover { background: #f0ede8; }
 .lib-top {
-  padding: 16px 20px;
+  padding: 10px 16px;
   background: white;
   border-bottom: 1px solid #ddd;
   display: flex;
   gap: 10px;
   flex-shrink: 0;
+  align-items: center;
+  min-height: 48px;
+}
+.lib-back-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #3d5a80;
+  cursor: pointer;
+  padding: 4px 8px 4px 0;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.lib-chapter-label {
+  font-size: 13px;
+  color: #3d5a80;
+  font-weight: bold;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (min-width: 600px) {
+  .lib-back-btn { display: none; }
 }
 .search-input {
   flex: 1;
@@ -87,6 +217,46 @@ header span { font-size: 13px; opacity: 0.75; }
 .btn-view { background: #e8c84a; color: #333; }
 .btn-view:hover { background: #d4b030; }
 
+/* ── 進捗バー ── */
+.progress-row {
+  padding: 8px 16px;
+  background: #eef2f7;
+  border-bottom: 1px solid #dde3ef;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #555;
+  flex-shrink: 0;
+}
+.progress-text { white-space: nowrap; }
+.progress-track {
+  flex: 1;
+  height: 6px;
+  background: #ccd6e8;
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 40px;
+}
+.progress-fill {
+  height: 100%;
+  background: #4caf50;
+  border-radius: 3px;
+  transition: width 0.4s;
+}
+.progress-reset {
+  background: none;
+  border: 1px solid #bbc6d8;
+  border-radius: 6px;
+  font-size: 11px;
+  color: #888;
+  padding: 3px 9px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.progress-reset:hover { background: #dde6f0; }
+
+/* ── 問題リスト ── */
 .q-list { overflow-y: auto; flex: 1; padding: 12px 16px; }
 .q-card {
   background: white;
@@ -98,19 +268,29 @@ header span { font-size: 13px; opacity: 0.75; }
   align-items: flex-start;
   gap: 14px;
 }
+/* 問題カード本体：クリック可能エリア */
+.q-card-body {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.q-card-body:active { opacity: 0.75; }
+
+/* ステータスアイコン（答えは非表示） */
 .q-badge {
   font-size: 22px;
   font-weight: bold;
   flex-shrink: 0;
-  width: 36px;
+  width: 32px;
   text-align: center;
+  line-height: 1;
+  padding-top: 2px;
 }
-.q-badge.ok { color: #4caf50; }
-.q-badge.ng { color: #f44336; }
-.q-meta {
-  flex: 1;
-  min-width: 0;
-}
+.q-badge.unanswered { color: #ccc; font-size: 18px; }
+.q-badge.correct { color: #4caf50; }
+.q-badge.wrong { color: #f44336; }
+
 .q-num { font-size: 11px; color: #888; margin-bottom: 3px; }
 .q-text {
   font-size: 14px;
@@ -120,7 +300,6 @@ header span { font-size: 13px; opacity: 0.75; }
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
-.q-explanation { font-size: 12px; color: #666; margin-top: 5px; }
 .q-actions { flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; }
 
 /* ── ストーリービューア ── */
@@ -163,6 +342,130 @@ header span { font-size: 13px; opacity: 0.75; }
   font-size: 13px;
 }
 .story-iframe { flex: 1; border: none; }
+
+/* ── クイズモーダル ── */
+.quiz-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 200;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+.quiz-modal.open { display: flex; }
+@media (min-width: 600px) {
+  .quiz-modal { align-items: center; }
+}
+.quiz-card {
+  background: white;
+  border-radius: 18px 18px 0 0;
+  width: 100%;
+  max-width: 640px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+@media (min-width: 600px) {
+  .quiz-card { border-radius: 18px; width: 92vw; }
+}
+.quiz-header {
+  padding: 14px 18px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+}
+.quiz-qnum { font-size: 11px; color: #aaa; }
+.quiz-topic { font-size: 13px; color: #3d5a80; font-weight: bold; flex: 1; }
+.quiz-close {
+  background: #eee;
+  border: none;
+  border-radius: 50%;
+  width: 30px; height: 30px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #666;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.quiz-body {
+  padding: 20px 18px 16px;
+  overflow-y: auto;
+}
+.quiz-text {
+  font-size: 15px;
+  line-height: 1.85;
+  color: #222;
+}
+.quiz-answer-area {
+  display: flex;
+  gap: 20px;
+  padding: 12px 18px 28px;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.quiz-btn {
+  width: 130px;
+  height: 68px;
+  border-radius: 16px;
+  border: 3px solid;
+  font-size: 32px;
+  font-weight: bold;
+  cursor: pointer;
+  background: white;
+  transition: background 0.12s, color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.quiz-btn-o { border-color: #4caf50; color: #4caf50; }
+.quiz-btn-o:hover, .quiz-btn-o:active { background: #4caf50; color: white; }
+.quiz-btn-x { border-color: #f44336; color: #f44336; }
+.quiz-btn-x:hover, .quiz-btn-x:active { background: #f44336; color: white; }
+.quiz-btn-num { width: 58px; height: 58px; font-size: 22px; border-color: #3d5a80; color: #3d5a80; }
+.quiz-btn-num:hover, .quiz-btn-num:active { background: #3d5a80; color: white; }
+
+.quiz-result-area {
+  padding: 14px 18px 24px;
+  border-top: 1px solid #eee;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+.quiz-result-label {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.quiz-result-label.correct { color: #4caf50; }
+.quiz-result-label.wrong { color: #f44336; }
+.quiz-correct-answer {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.quiz-explanation {
+  font-size: 13px;
+  color: #555;
+  background: #f8f7f4;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  line-height: 1.75;
+}
+.quiz-result-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.quiz-result-actions .btn {
+  flex: 1;
+  text-align: center;
+  min-width: 90px;
+  padding: 10px 12px;
+}
 
 /* ── 問題作成フォーム ── */
 .form-panel {
@@ -272,6 +575,267 @@ textarea { resize: vertical; min-height: 80px; }
 .chat-send:hover { background: #2d4a70; }
 .chat-send:disabled { background: #aaa; }
 .typing { color: #aaa; font-size: 13px; font-style: italic; }
+
+/* ── 脳トレパネル ── */
+.drill-wrap {
+  display: flex; flex: 1; overflow: hidden; position: relative;
+}
+.drill-tree {
+  width: 100%; overflow-y: auto;
+  background: #fff0f3; padding: 8px 0; flex-shrink: 0;
+}
+.drill-right {
+  display: none; flex-direction: column; overflow: hidden; width: 100%;
+}
+.drill-wrap.show-list .drill-tree { display: none; }
+.drill-wrap.show-list .drill-right { display: flex; }
+@media (min-width: 600px) {
+  .drill-tree { width: 240px; min-width: 200px; border-right: 1px solid #ddd; }
+  .drill-right { display: flex; }
+  .drill-wrap.show-list .drill-tree { display: block; }
+}
+.drill-top {
+  padding: 10px 16px; background: white; border-bottom: 1px solid #f8bbd0;
+  display: flex; gap: 10px; flex-shrink: 0; align-items: center; min-height: 48px;
+}
+.drill-chapter-label {
+  font-size: 13px; color: #c2185b; font-weight: bold; flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.drill-progress-row {
+  padding: 8px 16px;
+  background: #fce4ec;
+  border-bottom: 1px solid #f8bbd0;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12px; color: #880e4f; flex-shrink: 0;
+}
+.drill-q-list { overflow-y: auto; flex: 1; padding: 12px 16px; background: #fff0f3; }
+.drill-card {
+  background: white;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 4px rgba(194,24,91,0.10);
+  border-left: 3px solid #f48fb1;
+  display: flex; align-items: flex-start; gap: 14px;
+}
+.drill-loading {
+  padding: 48px 20px; text-align: center;
+  color: #c2185b; font-size: 14px; line-height: 2;
+}
+.drill-loading .spinner {
+  display: inline-block; width: 24px; height: 24px;
+  border: 3px solid #f8bbd0; border-top-color: #c2185b;
+  border-radius: 50%; animation: spin 0.9s linear infinite;
+  margin-bottom: 10px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── 進捗スケジュール ── */
+.sched-panel { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+.sched-banner {
+  background: linear-gradient(135deg, #3d5a80, #5b7fa6);
+  color: white; padding: 14px 16px; flex-shrink: 0;
+}
+.sched-banner-title { font-size: 14px; font-weight: bold; margin-bottom: 6px; }
+.sched-banner-sub { font-size: 11px; opacity: 0.8; margin-top: 5px; }
+.sched-prog-row { display: flex; align-items: center; gap: 10px; }
+.sched-prog-bar { flex: 1; height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; overflow: hidden; }
+.sched-prog-fill { height: 100%; background: #e8c84a; border-radius: 4px; transition: width 0.4s; }
+.sched-prog-text { font-size: 13px; font-weight: bold; white-space: nowrap; }
+.sched-month-tabs { display: flex; background: #f0ede8; border-bottom: 1px solid #ddd; flex-shrink: 0; }
+.sched-month-btn {
+  flex: 1; padding: 10px 4px; background: none; border: none;
+  border-bottom: 3px solid transparent; font-size: 13px;
+  cursor: pointer; color: #888; font-weight: bold;
+}
+.sched-month-btn.active { color: #3d5a80; border-bottom-color: #3d5a80; }
+.sched-body { overflow-y: auto; flex: 1; padding: 12px 16px; }
+.week-card { background: white; border-radius: 10px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }
+.week-header { padding: 10px 14px; background: #eef2f7; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.week-header.current-week { background: #3d5a80; color: white; }
+.week-label { font-weight: bold; }
+.week-dates { font-size: 12px; opacity: 0.8; }
+.week-cnt { margin-left: auto; font-size: 11px; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; }
+.week-header:not(.current-week) .week-cnt { background: #dde3ef; color: #555; }
+.ch-row { padding: 10px 14px; border-top: 1px solid #f0ede8; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: background 0.15s; flex-wrap: wrap; }
+.ch-row:hover { background: #fafafa; }
+.ch-status-icon { font-size: 15px; flex-shrink: 0; width: 22px; text-align: center; }
+.ch-name { flex: 1; font-size: 13px; color: #333; min-width: 120px; }
+.ch-lib-badge { font-size: 11px; color: #3d5a80; background: #eef2f7; padding: 2px 7px; border-radius: 8px; white-space: nowrap; }
+.ch-drill-badge { font-size: 11px; color: #c2185b; background: #fce4ec; padding: 2px 7px; border-radius: 8px; white-space: nowrap; }
+.ch-detail { padding: 8px 14px 12px 40px; background: #fafafa; border-top: 1px solid #f0ede8; display: none; }
+.ch-detail.open { display: block; }
+.hist-section-title { font-size: 11px; font-weight: bold; color: #888; margin: 4px 0 3px; }
+.hist-entry { display: flex; gap: 8px; font-size: 11px; color: #555; padding: 2px 0; align-items: center; }
+
+/* ── パスワードモーダル ── */
+.pw-modal { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:500; display:none; align-items:center; justify-content:center; }
+.pw-modal.open { display:flex; }
+.pw-card { background:white; border-radius:16px; padding:28px 24px; width:280px; display:flex; flex-direction:column; gap:14px; box-shadow:0 8px 32px rgba(0,0,0,0.2); }
+.pw-title { font-size:16px; font-weight:bold; color:#3d5a80; text-align:center; }
+.pw-input { width:100%; padding:12px 14px; border:2px solid #ccc; border-radius:10px; font-size:22px; letter-spacing:8px; text-align:center; }
+.pw-input:focus { outline:none; border-color:#3d5a80; }
+.pw-error { font-size:12px; color:#f44336; text-align:center; min-height:18px; }
+.pw-submit { width:100%; padding:12px; background:#3d5a80; color:white; border:none; border-radius:10px; font-size:15px; font-weight:bold; cursor:pointer; }
+.pw-submit:hover { background:#2d4a70; }
+
+/* ── 設定モーダル ── */
+.settings-modal { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:500; display:none; align-items:flex-end; justify-content:center; }
+.settings-modal.open { display:flex; }
+@media (min-width:600px) { .settings-modal { align-items:center; } }
+.settings-card { background:white; border-radius:18px 18px 0 0; width:100%; max-width:640px; max-height:90vh; display:flex; flex-direction:column; overflow:hidden; }
+@media (min-width:600px) { .settings-card { border-radius:18px; width:92vw; } }
+.settings-header { padding:14px 18px; background:#3d5a80; color:white; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.settings-header-title { font-size:15px; font-weight:bold; }
+.settings-close { background:rgba(255,255,255,0.2); border:none; color:white; padding:6px 14px; border-radius:6px; cursor:pointer; font-size:13px; }
+.settings-body { overflow-y:auto; flex:1; padding:16px; }
+.settings-ch-label { font-size:12px; font-weight:bold; color:#555; margin-bottom:6px; display:block; }
+.settings-ch-select { width:100%; padding:10px 14px; border:1px solid #ccc; border-radius:8px; font-size:13px; font-family:inherit; background:white; margin-bottom:16px; }
+.settings-section { background:#f8f7f4; border-radius:10px; padding:12px 14px; margin-bottom:12px; }
+.settings-section-title { font-size:13px; font-weight:bold; color:#555; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #eee; }
+.settings-hist-row { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #eee; font-size:13px; }
+.settings-hist-row:last-of-type { border-bottom:none; }
+.settings-hist-row .sh-idx { width:40px; flex-shrink:0; color:#888; }
+.settings-hist-row .sh-date { width:46px; flex-shrink:0; color:#aaa; font-size:11px; }
+.settings-hist-row .sh-score { flex:1; }
+.settings-del-btn { background:#fee; color:#f44336; border:1px solid #fcc; border-radius:6px; padding:3px 10px; font-size:11px; cursor:pointer; flex-shrink:0; }
+.settings-del-btn:hover { background:#f44336; color:white; }
+.settings-clear-btn { width:100%; margin-top:10px; padding:8px; background:none; border:1px solid #f44336; color:#f44336; border-radius:8px; font-size:12px; cursor:pointer; }
+.settings-clear-btn:hover { background:#f44336; color:white; }
+.settings-danger-zone { border:2px solid #f44336; border-radius:10px; padding:14px; margin-top:8px; text-align:center; }
+.settings-danger-title { font-size:13px; font-weight:bold; color:#f44336; margin-bottom:10px; }
+.settings-danger-btn { padding:10px 20px; background:#f44336; color:white; border:none; border-radius:8px; font-size:13px; cursor:pointer; font-weight:bold; }
+.settings-danger-btn:hover { background:#d32f2f; }
+.gear-btn { margin-left:8px; background:rgba(255,255,255,0.12); border:none; color:rgba(255,255,255,0.85); font-size:18px; width:36px; height:36px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.2s; }
+.gear-btn:hover { background:rgba(255,255,255,0.25); }
+
+/* ── 過去問パネル ── */
+.pe-panel { display:flex; flex-direction:column; height:100%; overflow:hidden; background:#f8f8f6; }
+
+/* ── 常時表示トップバー ── */
+.pe-top-bar { display:flex; align-items:center; gap:6px; padding:8px 12px; background:#fff; border-bottom:2px solid #e8e4de; flex-shrink:0; }
+.pe-year-tabs, .pe-part-tabs { display:flex; gap:3px; }
+.pe-year-btn, .pe-part-btn { padding:5px 10px; border:2px solid #d1cdc7; background:#f0ede8; color:#555; border-radius:16px; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+.pe-year-btn:hover, .pe-part-btn:hover { border-color:#4f7ef7; color:#4f7ef7; background:#fff; }
+.pe-year-btn.active, .pe-part-btn.active { background:#4f7ef7; color:#fff; border-color:#4f7ef7; box-shadow:0 2px 6px rgba(79,126,247,0.3); }
+.pe-divider { width:1px; height:20px; background:#e0dcd8; flex-shrink:0; }
+.pe-toggle-btn { margin-left:auto; flex-shrink:0; display:flex; align-items:center; gap:4px; padding:5px 10px; border:1px solid #d1cdc7; background:#f0ede8; color:#555; border-radius:16px; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+.pe-toggle-btn.open { background:#3d5a80; color:#fff; border-color:#3d5a80; }
+.pe-toggle-arrow { display:inline-block; transition:transform 0.25s; font-style:normal; }
+.pe-toggle-btn.open .pe-toggle-arrow { transform:rotate(180deg); }
+
+/* ── 折りたたみパネル ── */
+.pe-expand-panel { max-height:0; overflow:hidden; transition:max-height 0.3s ease; background:#fff; }
+.pe-expand-panel.open { max-height:200px; }
+
+/* 絞り込みフィルター */
+.pe-filter-row { display:flex; gap:6px; padding:8px 12px; border-bottom:1px solid #e8e4de; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; align-items:center; flex-wrap:nowrap; }
+.pe-filter-row::-webkit-scrollbar { display:none; }
+.pe-filter-label { font-size:11px; color:#999; margin-right:2px; flex-shrink:0; }
+.pe-filter-btn { padding:4px 12px; border:1px solid #d1cdc7; background:#f0ede8; color:#555; border-radius:14px; font-size:12px; font-weight:500; cursor:pointer; transition:all 0.2s; flex-shrink:0; }
+.pe-filter-btn:hover { border-color:#3d5a80; color:#3d5a80; background:#fff; }
+.pe-filter-btn.active { background:#3d5a80; color:#fff; border-color:#3d5a80; font-weight:700; }
+
+/* モード切替 */
+.pe-mode-row { display:flex; gap:10px; align-items:center; padding:8px 12px; border-bottom:1px solid #e8e4de; }
+.pe-mode-toggle { display:flex; background:#f0ede8; border-radius:10px; padding:3px; gap:2px; border:1px solid #d1cdc7; }
+.pe-mode-btn { padding:6px 16px; border:none; background:none; color:#777; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.pe-mode-btn.active { background:#fff; color:#3d5a80; box-shadow:0 1px 4px rgba(0,0,0,0.15); }
+.pe-stats { margin-left:auto; font-size:12px; color:#888; background:#f0ede8; padding:4px 10px; border-radius:10px; }
+
+#pe-browse-area { flex:1; overflow:hidden; display:flex; flex-direction:column; }
+#pe-exam-area { flex:1; overflow:hidden; display:flex; flex-direction:column; }
+.pe-question-list { flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:10px; }
+.pe-loading { color:#888; padding:30px; text-align:center; font-size:13px; }
+.pe-card { background:#fff; border:1px solid #e8e4de; border-radius:10px; padding:14px; }
+.pe-card-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+.pe-qnum { font-size:12px; font-weight:700; color:#4f7ef7; background:rgba(79,126,247,0.1); padding:2px 8px; border-radius:8px; }
+.pe-tag { font-size:10px; padding:2px 8px; border-radius:10px; background:rgba(79,126,247,0.1); color:#4f7ef7; }
+.pe-tag.subject { background:rgba(61,90,128,0.1); color:#3d5a80; font-weight:600; }
+.pe-result-badge { font-size:11px; padding:2px 8px; border-radius:10px; font-weight:600; }
+.pe-result-badge.correct { background:rgba(34,197,94,0.15); color:#16a34a; }
+.pe-result-badge.wrong { background:rgba(239,68,68,0.15); color:#dc2626; }
+.pe-result-badge.unanswered { background:#f0ede8; color:#888; }
+.pe-question-text { font-size:13px; line-height:1.8; color:#333; white-space:pre-wrap; }
+.pe-choices { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+.pe-choice-btn { flex:1; min-width:60px; padding:7px 10px; border:1px solid #d1cdc7; background:#f8f8f6; color:#333; border-radius:8px; font-size:12px; cursor:pointer; text-align:center; transition:all 0.2s; font-weight:500; }
+.pe-choice-btn:hover { border-color:#4f7ef7; color:#4f7ef7; background:#fff; }
+.pe-choice-btn.selected { background:#4f7ef7; color:#fff; border-color:#4f7ef7; }
+.pe-choice-btn.correct-ans { background:rgba(34,197,94,0.15); border-color:#16a34a; color:#16a34a; font-weight:700; }
+.pe-choice-btn.wrong-ans { background:rgba(239,68,68,0.1); border-color:#dc2626; color:#dc2626; }
+.pe-answer-reveal { margin-top:10px; padding:10px 14px; background:rgba(79,126,247,0.07); border-radius:8px; font-size:13px; border-left:3px solid #4f7ef7; }
+.pe-show-answer-btn { margin-top:8px; padding:5px 14px; border:1px solid #d1cdc7; background:#f0ede8; color:#666; border-radius:8px; font-size:11px; cursor:pointer; }
+.pe-show-answer-btn:hover { background:#3d5a80; color:#fff; border-color:#3d5a80; }
+.pe-exam-header { padding:10px 14px; background:#fff; border-bottom:1px solid #e8e4de; display:flex; align-items:center; gap:10px; }
+.pe-exam-bar-wrap { flex:1; height:6px; background:#e8e4de; border-radius:3px; overflow:hidden; }
+.pe-exam-bar { height:100%; background:#4f7ef7; border-radius:3px; transition:width 0.3s; }
+.pe-exam-scroll { flex:1; overflow-y:auto; display:flex; flex-direction:column; }
+.pe-exam-question { padding:16px; font-size:13px; line-height:1.8; white-space:pre-wrap; color:#333; }
+.pe-exam-choices { display:flex; flex-direction:column; gap:8px; padding:0 16px 16px; }
+.pe-exam-choice { padding:12px 16px; border:2px solid #e8e4de; background:#fff; border-radius:10px; font-size:13px; cursor:pointer; transition:all 0.2s; text-align:left; color:#333; font-weight:500; }
+.pe-exam-choice:hover { border-color:#4f7ef7; background:rgba(79,126,247,0.04); }
+.pe-exam-choice.selected { background:rgba(79,126,247,0.1); border-color:#4f7ef7; color:#3d5a80; font-weight:700; }
+.pe-exam-choice.correct-ans { background:rgba(34,197,94,0.15); border-color:#16a34a; }
+.pe-exam-choice.wrong-ans { background:rgba(239,68,68,0.1); border-color:#dc2626; }
+.pe-exam-nav { display:flex; gap:8px; padding:10px 16px; background:#fff; border-top:1px solid #e8e4de; flex-shrink:0; }
+.pe-exam-result { padding:16px; }
+.pe-result-summary { text-align:center; padding:24px 20px; background:#fff; border-radius:12px; margin-bottom:12px; }
+.pe-result-score { font-size:52px; font-weight:700; color:#4f7ef7; line-height:1; }
+.pe-result-label { font-size:14px; color:#888; margin-top:8px; }
+.pe-result-breakdown { background:#fff; border-radius:12px; padding:14px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; }
+.pe-breakdown-row { display:flex; align-items:center; gap:8px; font-size:12px; color:#333; }
+.pe-breakdown-bar-wrap { flex:1; height:8px; background:#f0ede8; border-radius:4px; overflow:hidden; }
+.pe-breakdown-bar { height:100%; border-radius:4px; }
+.pe-result-detail { background:#fff; border-radius:12px; padding:10px 14px; }
+.pe-result-row { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #f0ede8; font-size:12px; color:#333; }
+
+/* ── 音声解説パネル ── */
+.audio-panel { display:flex; flex-direction:column; height:100%; overflow:hidden; background:#f8f7f4; }
+.audio-selector-row {
+  display:flex; align-items:center; gap:6px;
+  padding:8px 12px; background:#fff;
+  border-bottom:1px solid #e8e5e0;
+  flex-shrink:0; overflow-x:auto; white-space:nowrap;
+}
+.audio-selector-label { font-size:11px; color:#888; flex-shrink:0; }
+.audio-sel-btn {
+  padding:4px 12px; border:1px solid #c8c4bc; border-radius:16px;
+  background:#fff; font-size:13px; cursor:pointer; white-space:nowrap;
+}
+.audio-sel-btn.active { background:#3d5a80; color:#fff; border-color:#3d5a80; }
+.audio-topic-list { flex:1; overflow-y:auto; padding:12px; }
+.audio-placeholder { color:#aaa; font-size:14px; text-align:center; padding:40px 0; }
+.audio-topic-item {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 14px; margin-bottom:8px;
+  background:#fff; border-radius:10px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.06);
+}
+.audio-topic-num { font-size:12px; color:#333; width:20px; flex-shrink:0; }
+.audio-topic-title { flex:1; font-size:14px; color:#333; }
+.audio-gen-btn {
+  padding:5px 14px; border:none; border-radius:16px;
+  font-size:12px; cursor:pointer; flex-shrink:0;
+}
+.audio-gen-btn.idle { background:#e8e5e0; color:#555; }
+.audio-gen-btn.running { background:#f5c842; color:#333; }
+.audio-gen-btn.done { background:#3d5a80; color:#fff; }
+.audio-gen-btn.done:hover { background:#2d4060; }
+.audio-topic-group { margin-bottom:12px; }
+.audio-topic-header {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 12px; background:#e8e5e0; border-radius:8px;
+  margin-bottom:4px;
+}
+.audio-articles { padding-left:16px; }
+.audio-article-item {
+  display:flex; align-items:center; gap:8px;
+  padding:7px 12px; margin-bottom:4px;
+  background:#fff; border-radius:8px;
+  box-shadow:0 1px 2px rgba(0,0,0,0.05);
+}
+.audio-article-label { flex:1; font-size:13px; color:#333; }
 </style>
 </head>
 <body>
@@ -280,78 +844,177 @@ textarea { resize: vertical; min-height: 80px; }
   <span style="font-size:28px">⚖️</span>
   <div>
     <h1>Tomomi 法律学習アプリ</h1>
-    <span>即時取得 民法192条・188条</span>
+    <span>司法書士への旅</span>
   </div>
+  <a href="/journey" target="_self" style="margin-left:auto;font-size:12px;color:rgba(255,255,255,0.75);text-decoration:none;background:rgba(255,255,255,0.12);padding:6px 14px;border-radius:20px;white-space:nowrap;transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.22)'" onmouseout="this.style.background='rgba(255,255,255,0.12)'">✨ 旅を見る</a>
+  <button class="gear-btn" onclick="openSettingsGate()" title="設定">⚙️</button>
 </header>
 
 <div class="tabs">
-  <button class="tab-btn active" onclick="switchTab('lib')">📚 問題ライブラリ</button>
-  <button class="tab-btn" onclick="switchTab('create')">✏️ 問題を作る</button>
-  <button class="tab-btn" onclick="switchTab('chat')">💬 Tomomiに質問</button>
+  <button class="tab-btn active" onclick="switchTab('lib')">📚 問題集</button>
+  <button class="tab-btn" onclick="switchTab('drill')">🧠脳トレ</button>
+  <button class="tab-btn" onclick="switchTab('schedule')">📅進捗</button>
+  <button class="tab-btn" onclick="switchTab('pastexam')">📝過去問</button>
+  <button class="tab-btn" onclick="switchTab('audio')">🔊 音声</button>
+  <button class="tab-btn" onclick="switchTab('chat')">💬質問</button>
 </div>
 
 <div class="content">
 
   <!-- ── タブ1: 問題ライブラリ ── -->
   <div class="panel active" id="panel-lib">
-    <div class="lib-top">
-      <input class="search-input" id="search-input" placeholder="キーワードで検索（例：公信力、無過失）" oninput="onSearch()">
-    </div>
-    <div class="q-list" id="q-list">読み込み中...</div>
-  </div>
-
-  <!-- ── タブ2: 問題作成 ── -->
-  <div class="panel" id="panel-create">
-    <div class="form-panel">
-      <h2 style="margin-bottom:20px;font-size:16px;color:#555">新しい問題を登録</h2>
-      <div style="display:flex;gap:16px">
-        <div class="form-group" style="flex:2">
-          <label>単元名</label>
-          <input type="text" id="f-unit" value="即時取得">
+    <div class="lib-wrap">
+      <!-- 左: 章ツリー -->
+      <div class="lib-tree" id="lib-tree">読み込み中...</div>
+      <!-- 右: 問題リスト -->
+      <div class="lib-right">
+        <div class="lib-top">
+          <button class="lib-back-btn" onclick="goBackToTree()">←</button>
+          <span class="lib-chapter-label" id="lib-chapter-label">章を選択してください</span>
         </div>
-        <div class="form-group" style="flex:1">
-          <label>問番号</label>
-          <input type="number" id="f-num" min="1" value="">
+        <!-- 進捗バー -->
+        <div class="progress-row" id="progress-row" style="display:none">
+          <span class="progress-text" id="progress-text"></span>
+          <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+          <button class="progress-reset" onclick="resetProgress()">リセット</button>
         </div>
-      </div>
-      <div class="form-group">
-        <label>関連条文</label>
-        <input type="text" id="f-law" placeholder="例：民法192条">
-      </div>
-      <div class="form-group">
-        <label>問題文</label>
-        <textarea id="f-text" placeholder="問題文を入力"></textarea>
-      </div>
-      <div class="form-group">
-        <label>答え</label>
-        <div class="answer-toggle">
-          <label style="border-color:#4caf50;cursor:pointer;padding:8px 28px">
-            <input type="radio" name="answer" id="ans-ok" value="○" checked>
-            <span>○</span>
-          </label>
-          <label style="border-color:#f44336;cursor:pointer;padding:8px 28px">
-            <input type="radio" name="answer" id="ans-ng" value="×">
-            <span>×</span>
-          </label>
+        <!-- 自動生成進捗バー -->
+        <div id="auto-gen-bar" style="display:none;padding:5px 14px;background:#fffde7;border-bottom:1px solid #f0d060;font-size:12px;color:#7c6000;align-items:center;gap:8px;">
+          <span>自動生成中</span>
+          <span id="auto-gen-counter" style="font-weight:600;"></span>
+          <div style="flex:1;height:4px;background:#f0e090;border-radius:2px;overflow:hidden;">
+            <div id="auto-gen-fill" style="height:100%;background:#f0a500;border-radius:2px;transition:width 0.5s;width:0%"></div>
+          </div>
         </div>
+        <div class="q-list" id="q-list"><p style="color:#aaa;padding:20px">← 左の章を選んでください</p></div>
       </div>
-      <div class="form-group">
-        <label>解説</label>
-        <textarea id="f-exp" placeholder="解説文を入力"></textarea>
-      </div>
-      <div class="form-group">
-        <label>出典（任意）</label>
-        <input type="text" id="f-src" placeholder="例：H30-8-1">
-      </div>
-      <div class="form-actions">
-        <button class="btn btn-primary" onclick="saveQuestion()">保存</button>
-        <button class="btn btn-green" onclick="saveAndGenerate()">保存してストーリー生成</button>
-      </div>
-      <div class="form-msg" id="form-msg"></div>
     </div>
   </div>
 
-  <!-- ── タブ3: チャット ── -->
+  <!-- ── タブ2: 脳トレ ── -->
+  <div class="panel" id="panel-drill">
+    <div class="drill-wrap" id="drill-wrap">
+      <!-- 左: 章ツリー -->
+      <div class="drill-tree" id="drill-tree">読み込み中...</div>
+      <!-- 右: 問題リスト -->
+      <div class="drill-right">
+        <div class="drill-top">
+          <button class="lib-back-btn" onclick="drillGoBack()">←</button>
+          <span class="drill-chapter-label" id="drill-chapter-label">章を選択してください</span>
+        </div>
+        <div class="drill-progress-row" id="drill-progress-row" style="display:none">
+          <span id="drill-progress-text"></span>
+          <div class="progress-track" style="background:#f8bbd0;">
+            <div class="progress-fill" id="drill-progress-fill" style="width:0%;background:#e91e63;"></div>
+          </div>
+          <button class="progress-reset" onclick="changeDrillQuestions()" style="border-color:#f8bbd0;color:#c2185b;white-space:nowrap;">🔄 問題を変更</button>
+          <button class="progress-reset" onclick="resetDrillProgress()" style="border-color:#f8bbd0;color:#c2185b;">↺ リセット</button>
+        </div>
+        <div class="drill-q-list" id="drill-list">
+          <p style="color:#aaa;padding:20px">← 左の章を選んでください</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── タブ3: 進捗スケジュール ── -->
+  <div class="panel" id="panel-schedule">
+    <div class="sched-panel">
+      <div class="sched-banner" id="sched-banner">読み込み中…</div>
+      <div class="sched-month-tabs" id="sched-month-tabs"></div>
+      <div class="sched-body" id="sched-body"></div>
+    </div>
+  </div>
+
+  <!-- ── タブ4: 過去問 ── -->
+  <div class="panel" id="panel-pastexam">
+    <div class="pe-panel">
+
+      <!-- 常時表示トップバー -->
+      <div class="pe-top-bar">
+        <div class="pe-year-tabs" id="pe-year-tabs">
+          <button class="pe-year-btn active" onclick="setPeYear(5)">R5</button>
+          <button class="pe-year-btn" onclick="setPeYear(6)">R6</button>
+          <button class="pe-year-btn" onclick="setPeYear(7)">R7</button>
+        </div>
+        <div class="pe-divider"></div>
+        <div class="pe-part-tabs" id="pe-part-tabs">
+          <button class="pe-part-btn active" onclick="setPePart('午前')">午前</button>
+          <button class="pe-part-btn" onclick="setPePart('午後')">午後</button>
+        </div>
+        <button class="pe-toggle-btn" id="pe-toggle-btn" onclick="togglePePanel()">
+          絞り込み・設定 <i class="pe-toggle-arrow">▾</i>
+        </button>
+      </div>
+
+      <!-- 折りたたみパネル（絞り込み＋モード） -->
+      <div class="pe-expand-panel" id="pe-expand-panel">
+        <!-- 科目フィルター -->
+        <div class="pe-filter-row" id="pe-filter-row">
+          <button class="pe-filter-btn active" onclick="setPeFilter('all')">全問</button>
+          <button class="pe-filter-btn" onclick="setPeFilter('民法')">民法</button>
+          <button class="pe-filter-btn" onclick="setPeFilter('憲法')">憲法</button>
+          <button class="pe-filter-btn" onclick="setPeFilter('商法')">商法</button>
+          <button class="pe-filter-btn" onclick="setPeFilter('不動産登記法')">不登法</button>
+          <button class="pe-filter-btn" onclick="setPeFilter('商業登記法')">商登法</button>
+          <button class="pe-filter-btn" onclick="setPeFilter('民事訴訟法')">民訴</button>
+          <button class="pe-filter-btn" onclick="setPeFilter('その他')">その他</button>
+        </div>
+        <!-- モード切替 -->
+        <div class="pe-mode-row">
+          <div class="pe-mode-toggle">
+            <button class="pe-mode-btn active" id="pe-mode-browse" onclick="setPeMode('browse')">📖 閲覧</button>
+            <button class="pe-mode-btn" id="pe-mode-exam" onclick="setPeMode('exam')">✏️ 試験</button>
+          </div>
+          <span class="pe-stats" id="pe-stats"></span>
+        </div>
+      </div>
+
+      <!-- 閲覧モード: 問題リスト -->
+      <div id="pe-browse-area">
+        <div id="pe-question-list" class="pe-question-list">
+          <div class="pe-loading">問題を読み込み中…</div>
+        </div>
+      </div>
+
+      <!-- 試験モード -->
+      <div id="pe-exam-area" style="display:none">
+        <div class="pe-exam-header">
+          <span id="pe-exam-progress">1 / 35問</span>
+          <div class="pe-exam-bar-wrap"><div class="pe-exam-bar" id="pe-exam-bar"></div></div>
+        </div>
+        <div class="pe-exam-scroll">
+          <div id="pe-exam-question" class="pe-exam-question"></div>
+          <div id="pe-exam-choices" class="pe-exam-choices"></div>
+          <div id="pe-exam-result" style="display:none" class="pe-exam-result"></div>
+        </div>
+        <div class="pe-exam-nav" id="pe-exam-nav">
+          <button class="btn btn-secondary" onclick="peExamPrev()" id="pe-btn-prev">◀ 前へ</button>
+          <button class="btn btn-primary" onclick="peExamNext()" id="pe-btn-next">次へ ▶</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 音声解説タブ ── -->
+  <div class="panel" id="panel-audio">
+    <div class="audio-panel">
+      <div class="audio-selector-row" id="audio-vol-row">
+        <span class="audio-selector-label">巻</span>
+        <button class="audio-sel-btn active" onclick="selectAudioVol(1,this)">民法Ⅰ</button>
+        <button class="audio-sel-btn" onclick="selectAudioVol(2,this)">民法Ⅱ</button>
+        <button class="audio-sel-btn" onclick="selectAudioVol(3,this)">民法Ⅲ</button>
+      </div>
+      <div class="audio-selector-row" id="audio-part-row"></div>
+      <div class="audio-selector-row" id="audio-chap-row"></div>
+      <div class="audio-topic-list" id="audio-topic-list">
+        <div class="audio-placeholder">巻・部・章を選択してください</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── タブ4: チャット ── -->
   <div class="panel" id="panel-chat">
     <div class="chat-panel">
       <div class="chat-messages" id="chat-messages">
@@ -383,86 +1046,525 @@ textarea { resize: vertical; min-height: 80px; }
   </div>
 </div>
 
+<!-- ── クイズモーダル ── -->
+<div class="quiz-modal" id="quiz-modal" onclick="onQuizModalClick(event)">
+  <div class="quiz-card" id="quiz-card">
+    <div class="quiz-header">
+      <span class="quiz-qnum" id="quiz-qnum"></span>
+      <span class="quiz-topic" id="quiz-topic"></span>
+      <button class="quiz-close" onclick="closeQuiz()">✕</button>
+    </div>
+    <div class="quiz-body">
+      <div class="quiz-text" id="quiz-text"></div>
+    </div>
+    <!-- 回答前 -->
+    <div class="quiz-answer-area" id="quiz-answer-area">
+      <!-- renderAnswerButtons(q) で動的に生成 -->
+    </div>
+    <!-- 回答後 -->
+    <div class="quiz-result-area" id="quiz-result-area" style="display:none">
+      <div class="quiz-result-label" id="quiz-result-label"></div>
+      <div class="quiz-correct-answer" id="quiz-correct-answer"></div>
+      <div class="quiz-explanation" id="quiz-explanation"></div>
+      <div class="quiz-result-actions">
+        <button class="btn btn-view" id="quiz-view-btn" style="display:none">表示（マンガ解説）</button>
+        <button class="btn btn-primary" id="quiz-next-btn" onclick="nextQuestion()">次の問題 →</button>
+        <button class="btn" style="background:#eee;color:#666" onclick="closeQuiz()">一覧に戻る</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── パスワードモーダル ── -->
+<div class="pw-modal" id="pw-modal" onclick="onPwModalClick(event)">
+  <div class="pw-card">
+    <div class="pw-title">⚙️ 設定</div>
+    <input class="pw-input" id="pw-input" type="password" maxlength="6" placeholder="••••••"
+      onkeydown="if(event.key==='Enter')submitPassword()">
+    <div class="pw-error" id="pw-error"></div>
+    <button class="pw-submit" onclick="submitPassword()">確認</button>
+  </div>
+</div>
+
+<!-- ── 設定モーダル ── -->
+<div class="settings-modal" id="settings-modal" onclick="onSettingsModalClick(event)">
+  <div class="settings-card">
+    <div class="settings-header">
+      <span class="settings-header-title">⚙️ 設定</span>
+      <button class="settings-close" onclick="closeSettings()">✕ 閉じる</button>
+    </div>
+    <div class="settings-body">
+      <label class="settings-ch-label">📋 履歴管理 — 章を選択</label>
+      <select class="settings-ch-select" id="settings-ch-select" onchange="onSettingsChChange()">
+        <option value="">── 章を選択 ──</option>
+      </select>
+      <div id="settings-hist">
+        <p style="color:#aaa;padding:20px;text-align:center;font-size:13px">章を選択してください</p>
+      </div>
+      <div class="settings-danger-zone">
+        <div class="settings-danger-title">⚠️ 全データリセット</div>
+        <button class="settings-danger-btn" onclick="resetAllData()">すべての履歴・進捗を消去</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ────────────────────────────────────────────────
 // タブ切替
 // ────────────────────────────────────────────────
 function switchTab(id) {
   document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    b.classList.toggle('active', ['lib','create','chat'][i] === id)
+    b.classList.toggle('active', ['lib','drill','schedule','pastexam','chat'][i] === id)
   })
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'))
   document.getElementById('panel-' + id).classList.add('active')
   if (id === 'lib') loadQuestions()
+  if (id === 'drill') renderDrillTree()
+  if (id === 'schedule') renderSchedule()
+  if (id === 'pastexam') loadPastExam()
 }
 
 // ────────────────────────────────────────────────
-// 問題ライブラリ
+// 章ツリー定義
 // ────────────────────────────────────────────────
-let searchTimer = null
-function onSearch() {
-  clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    const q = document.getElementById('search-input').value.trim()
-    if (q) {
-      fetch('/api/questions/search?q=' + encodeURIComponent(q))
-        .then(r => r.json()).then(renderList)
-    } else {
-      loadQuestions()
+const TREE = [
+  { book: 1, label: '民法Ⅰ', parts: [
+    { part: 1, label: '第1部 基本編', chapters: [
+      [1,'第1章 民法の本質'],
+      [2,'第2章 物権の世界'],
+      [3,'第3章 債権の世界'],
+      [4,'第4章 物権と債権どちらが強いか'],
+      [5,'第5章 担保物権の仕組み'],
+    ]},
+    { part: 2, label: '第2部 民法総則編', chapters: [
+      [1,'第1章 代理'],
+      [2,'第2章 時効'],
+      [3,'第3章 意思表示の無効'],
+      [4,'第4章 制限行為能力'],
+      [5,'第5章 瑕疵ある意思表示'],
+      [6,'第6章 番外シリーズ'],
+    ]},
+  ]},
+  { book: 2, label: '民法Ⅱ', parts: [
+    { part: 1, label: '第1部 物権編', chapters: [
+      [1,'第1章 不動産物権変動と登記'],
+      [2,'第2章 第三者の範囲'],
+      [3,'第3章 明認方法'],
+      [4,'第4章 動産物権変動と引渡し'],
+      [5,'第5章 占有権'],
+      [6,'第6章 共有の問題'],
+      [7,'第7章 番外シリーズ'],
+    ]},
+    { part: 2, label: '第2部 担保物権編', chapters: [
+      [1,'第1章 抵当権'],
+      [2,'第2章 質権'],
+      [3,'第3章 留置権'],
+      [4,'第4章 先取特権'],
+      [5,'第5章 譲渡担保等'],
+    ]},
+  ]},
+  { book: 3, label: '民法Ⅲ', parts: [
+    { part: 1, label: '第1部 債権編', chapters: [
+      [1,'第1章 売買'],
+      [2,'第2章 賃貸借'],
+      [3,'第3章 委任'],
+      [4,'第4章 請負'],
+      [5,'第5章 典型契約'],
+      [6,'第6章 第三者のためにする契約'],
+      [7,'第7章 契約の成立'],
+      [8,'第8章 同時履行・解除'],
+      [9,'第9章 債務不履行'],
+      [10,'第10章 債権譲渡・債務引受'],
+      [11,'第11章 更改'],
+      [12,'第12章 相殺'],
+      [13,'第13章 多数当事者の法律関係'],
+      [14,'第14章 債権者代位権・詐害行為取消権'],
+      [15,'第15章 債権編その他'],
+      [16,'第16章 定型約款'],
+      [17,'第17章 不法行為'],
+      [18,'第18章 不当利得'],
+    ]},
+    { part: 2, label: '第2部 親族・相続編', chapters: [
+      [1,'第1章 総論'],
+      [2,'第2章 婚姻'],
+      [3,'第3章 親子'],
+      [4,'第4章 相続'],
+      [5,'第5章 遺言'],
+      [6,'第6章 配偶者の居住の権利'],
+    ]},
+  ]},
+]
+
+let chapterCounts = {}
+let currentChapter = null  // {book, part, chapter, label}
+let currentQuestions = []  // 表示中の問題一覧
+let currentQuizIndex = 0   // モーダルで開いている問題のインデックス
+let currentQuizQ = null    // モーダルで開いている問題オブジェクト
+let quizMode = 'lib'       // 'lib' | 'drill'
+
+// ── 脳トレ state ──
+let drillResults = {}
+try { drillResults = JSON.parse(localStorage.getItem('drill_results') || '{}') } catch(e) {}
+let currentDrillChapter = null
+let currentDrillQuestions = []
+
+// ── 挑戦履歴（削除されない） ──
+let libHistory = {}
+try { libHistory = JSON.parse(localStorage.getItem('lib_history') || '{}') } catch(e) {}
+let drillHistory = {}
+try { drillHistory = JSON.parse(localStorage.getItem('drill_history') || '{}') } catch(e) {}
+
+// ────────────────────────────────────────────────
+// クイズ結果管理（DB同期）
+// ────────────────────────────────────────────────
+let quizResults = {}
+try { quizResults = JSON.parse(localStorage.getItem('quiz_results') || '{}') } catch(e) {}
+
+// サーバーへ進捗を保存（fire-and-forget）
+function saveProgressToServer(key, data) {
+  const value = JSON.stringify(data)
+  try { localStorage.setItem(key, value) } catch(e) {}
+  fetch('/api/progress', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key, value })
+  }).catch(() => {})
+}
+
+// 起動時にサーバーから進捗を読み込み、ローカルを上書き
+async function loadProgressFromServer() {
+  try {
+    const resp = await fetch('/api/progress/all')
+    if (!resp.ok) return
+    const all = await resp.json()
+    let needsRerender = false
+    if (all.quiz_results) {
+      try { quizResults = JSON.parse(all.quiz_results); localStorage.setItem('quiz_results', all.quiz_results); needsRerender = true } catch(e) {}
     }
-  }, 300)
+    if (all.drill_results) {
+      try { drillResults = JSON.parse(all.drill_results); localStorage.setItem('drill_results', all.drill_results) } catch(e) {}
+    }
+    if (all.lib_history) {
+      try { libHistory = JSON.parse(all.lib_history); localStorage.setItem('lib_history', all.lib_history); needsRerender = true } catch(e) {}
+    }
+    if (all.drill_history) {
+      try { drillHistory = JSON.parse(all.drill_history); localStorage.setItem('drill_history', all.drill_history) } catch(e) {}
+    }
+    if (needsRerender && currentChapter && currentQuestions.length) {
+      renderProgress()
+      renderList(currentQuestions)
+    }
+    notifyScheduleChange()
+  } catch(e) {}
+}
+
+function chapterKey() {
+  if (!currentChapter) return null
+  return `${currentChapter.book}-${currentChapter.part}-${currentChapter.chapter}`
+}
+
+function getResult(questionNum) {
+  const key = chapterKey()
+  return key ? (quizResults[key] || {})[questionNum] || null : null
+}
+
+function setResult(questionNum, result) {
+  const key = chapterKey()
+  if (!key) return
+  if (!quizResults[key]) quizResults[key] = {}
+  quizResults[key][questionNum] = result
+  saveProgressToServer('quiz_results', quizResults)
+  notifyScheduleChange()
+}
+
+function recordLibAttempt() {
+  const key = chapterKey()
+  if (!key || !currentQuestions.length) return
+  const results = quizResults[key] || {}
+  const answered = Object.keys(results).length
+  if (answered === 0) return
+  const correct = Object.values(results).filter(v => v === 'correct').length
+  const rec = { ts: new Date().toISOString(), correct, answered, total: currentQuestions.length }
+  if (!libHistory[key]) libHistory[key] = []
+  libHistory[key].push(rec)
+  saveProgressToServer('lib_history', libHistory)
+  notifyScheduleChange()
+}
+
+function resetProgress() {
+  recordLibAttempt()
+  const key = chapterKey()
+  if (!key) return
+  delete quizResults[key]
+  saveProgressToServer('quiz_results', quizResults)
+  notifyScheduleChange()
+  renderProgress()
+  renderList(currentQuestions)
+}
+
+function renderProgress() {
+  const key = chapterKey()
+  const row = document.getElementById('progress-row')
+  if (!key || !currentQuestions.length) { row.style.display = 'none'; return }
+  const results = quizResults[key] || {}
+  const answered = Object.keys(results).length
+  const correct = Object.values(results).filter(v => v === 'correct').length
+  const total = currentQuestions.length
+  row.style.display = 'flex'
+  document.getElementById('progress-text').textContent =
+    `${total}問中 ${correct}問正解（${answered}問回答済み）`
+  const pct = total > 0 ? Math.round(correct / total * 100) : 0
+  document.getElementById('progress-fill').style.width = pct + '%'
+}
+
+// ────────────────────────────────────────────────
+// 章ツリー
+// ────────────────────────────────────────────────
+async function initTree() {
+  chapterCounts = await fetch('/api/chapters/counts').then(r => r.json()).catch(() => ({}))
+  renderTree()
+}
+
+function renderTree() {
+  const el = document.getElementById('lib-tree')
+  let html = ''
+  for (const bk of TREE) {
+    html += `<div class="tree-book"><div class="tree-book-title">${bk.label}</div>`
+    for (const pt of bk.parts) {
+      html += `<div class="tree-part-title">${pt.label}</div>`
+      for (const [ch, name] of pt.chapters) {
+        const key = `${bk.book}-${pt.part}-${ch}`
+        const cnt = chapterCounts[key] || 0
+        const cntHtml = `<span class="tree-cnt">${cnt}問</span>`
+        const isActive = currentChapter && currentChapter.book===bk.book && currentChapter.part===pt.part && currentChapter.chapter===ch
+        html += `<div class="tree-chapter${isActive?' active':''}" onclick="selectChapter(${bk.book},${pt.part},${ch},'${name.replace(/'/g,"\\'")}')">
+          <span class="tree-ch-name">${name}</span>
+          <button class="tree-audio-btn" onclick="event.stopPropagation();jumpToAudio(${bk.book},${pt.part},${ch})" title="音声解説へ">🔊</button>
+          ${cntHtml}</div>`
+      }
+    }
+    html += '</div>'
+  }
+  el.innerHTML = html
+}
+
+function selectChapter(book, part, chapter, label) {
+  currentChapter = { book, part, chapter, label }
+  document.getElementById('lib-chapter-label').textContent = label
+  document.querySelector('.lib-wrap').classList.add('show-list')
+  renderTree()
+  fetch(`/api/questions?book=${book}&part=${part}&chapter=${chapter}`)
+    .then(r => r.json())
+    .then(qs => {
+      currentQuestions = qs
+      renderProgress()
+      renderList(qs)
+      triggerAutoGenerate(book, part, chapter)
+    })
+}
+
+function goBackToTree() {
+  document.querySelector('.lib-wrap').classList.remove('show-list')
 }
 
 function loadQuestions() {
-  fetch('/api/questions').then(r => r.json()).then(renderList)
+  if (currentChapter) {
+    fetch(`/api/questions?book=${currentChapter.book}&part=${currentChapter.part}&chapter=${currentChapter.chapter}`)
+      .then(r => r.json())
+      .then(qs => {
+        currentQuestions = qs
+        renderProgress()
+        renderList(qs)
+      })
+  }
+}
+
+// ────────────────────────────────────────────────
+// 問題リスト描画
+// ────────────────────────────────────────────────
+function badgeHtml(questionNum) {
+  const r = getResult(questionNum)
+  if (r === 'correct') return '<div class="q-badge correct">✓</div>'
+  if (r === 'wrong')   return '<div class="q-badge wrong">✗</div>'
+  return '<div class="q-badge unanswered">○</div>'
 }
 
 function renderList(questions) {
   const el = document.getElementById('q-list')
-  if (!questions.length) { el.innerHTML = '<p style="color:#aaa;padding:20px">見つかりませんでした</p>'; return }
-  el.innerHTML = questions.map(q => {
-    const badge = q.answer === '○'
-      ? '<div class="q-badge ok">○</div>'
-      : '<div class="q-badge ng">×</div>'
+  if (!questions.length) {
+    el.innerHTML = '<p style="color:#aaa;padding:20px">見つかりませんでした</p>'
+    return
+  }
+  el.innerHTML = questions.map((q, idx) => {
+    const src = q.exam_source ? `  (${q.exam_source})` : ''
+    const bid = q.id || idx
     return `<div class="q-card">
-      ${badge}
-      <div class="q-meta">
-        <div class="q-num">${q.unit} 第${q.question_num}問${q.exam_source ? ' (' + q.exam_source + ')' : ''}</div>
+      <div id="badge-${q.question_num}">${badgeHtml(q.question_num)}</div>
+      <div class="q-card-body" onclick="openQuiz(${idx})">
+        <div class="q-num">${q.topic || q.unit}  第${q.question_num}問${src}</div>
         <div class="q-text">${q.question_text}</div>
-        ${q.explanation ? '<div class="q-explanation">→ ' + q.explanation + '</div>' : ''}
       </div>
       <div class="q-actions">
-        <button class="btn btn-green" id="gen-btn-${q.question_num}" onclick="generate(${q.question_num}, '${q.unit}')">生成</button>
-        <button class="btn" style="background:#eee;color:#666;font-size:12px" id="regen-btn-${q.question_num}" onclick="generate(${q.question_num}, '${q.unit}', true)" title="再生成">↺</button>
+        <button class="btn btn-green" id="gen-btn-${bid}" onclick="generate(${bid}, ${q.question_num}, '${q.unit}')">生成</button>
+        <button class="btn" style="background:#eee;color:#666;font-size:12px" id="regen-btn-${bid}" onclick="generate(${bid}, ${q.question_num}, '${q.unit}', true)" title="再生成">↺</button>
       </div>
     </div>`
   }).join('')
-  // 生成済みチェック
-  questions.forEach(q => checkStatus(q.question_num, q.unit))
+  questions.forEach(q => checkStatus(q.id || q.question_num, q.question_num, q.unit))
 }
 
-function checkStatus(num, unit) {
-  fetch(`/api/status/${num}?unit=${encodeURIComponent(unit)}`)
+// ────────────────────────────────────────────────
+// クイズモーダル
+// ────────────────────────────────────────────────
+function renderAnswerButtons(q) {
+  const area = document.getElementById('quiz-answer-area')
+  if (['1','2','3','4','5'].includes(q.answer)) {
+    area.innerHTML = [1,2,3,4,5].map(n =>
+      `<button class="quiz-btn quiz-btn-num" onclick="submitAnswer('${n}')">${n}</button>`
+    ).join('')
+  } else {
+    area.innerHTML = `
+      <button class="quiz-btn quiz-btn-o" onclick="submitAnswer('○')">○</button>
+      <button class="quiz-btn quiz-btn-x" onclick="submitAnswer('×')">×</button>`
+  }
+}
+
+function openQuiz(idx) {
+  const q = currentQuestions[idx]
+  if (!q) return
+  currentQuizIndex = idx
+  currentQuizQ = q
+  renderAnswerButtons(q)
+
+  document.getElementById('quiz-qnum').textContent = `第${q.question_num}問`
+  document.getElementById('quiz-topic').textContent = q.topic || q.unit
+  document.getElementById('quiz-text').textContent = q.question_text
+
+  const existingResult = getResult(q.question_num)
+  if (existingResult) {
+    // 既回答：結果画面を表示
+    document.getElementById('quiz-answer-area').style.display = 'none'
+    showQuizResult(q, existingResult === 'correct', false)
+  } else {
+    // 未回答：解答ボタンを表示
+    document.getElementById('quiz-answer-area').style.display = 'flex'
+    document.getElementById('quiz-result-area').style.display = 'none'
+  }
+
+  // 最後の問題なら「次の問題」を「終了」に変更
+  const nextBtn = document.getElementById('quiz-next-btn')
+  nextBtn.textContent = idx < currentQuestions.length - 1 ? '次の問題 →' : '終了'
+
+  document.getElementById('quiz-modal').classList.add('open')
+}
+
+function onQuizModalClick(e) {
+  if (e.target === document.getElementById('quiz-modal')) closeQuiz()
+}
+
+function closeQuiz() {
+  document.getElementById('quiz-modal').classList.remove('open')
+}
+
+function submitAnswer(selected) {
+  const q = currentQuizQ
+  const isCorrect = selected === q.answer
+  const result = isCorrect ? 'correct' : 'wrong'
+
+  if (quizMode === 'drill') {
+    setDrillResult(q.question_num, result)
+    const badgeEl = document.getElementById(`drill-badge-${q.question_num}`)
+    if (badgeEl) badgeEl.innerHTML = drillBadgeHtml(q.question_num)
+    renderDrillProgress()
+    document.getElementById('quiz-answer-area').style.display = 'none'
+    showDrillResult(q, isCorrect)
+  } else {
+    setResult(q.question_num, result)
+    const badgeEl = document.getElementById(`badge-${q.question_num}`)
+    if (badgeEl) badgeEl.innerHTML = badgeHtml(q.question_num)
+    renderProgress()
+    document.getElementById('quiz-answer-area').style.display = 'none'
+    showQuizResult(q, isCorrect, true)
+  }
+}
+
+function showQuizResult(q, isCorrect, justAnswered) {
+  const resultArea = document.getElementById('quiz-result-area')
+  resultArea.style.display = 'block'
+
+  const label = document.getElementById('quiz-result-label')
+  label.textContent = isCorrect ? '✓ 正解！' : '✗ 不正解'
+  label.className = `quiz-result-label ${isCorrect ? 'correct' : 'wrong'}`
+
+  document.getElementById('quiz-correct-answer').textContent = `正解: ${q.answer}`
+  document.getElementById('quiz-explanation').textContent = q.explanation || ''
+
+  // 表示ボタン：ストーリー存在確認
+  const viewBtn = document.getElementById('quiz-view-btn')
+  viewBtn.style.display = 'none'
+  fetch(`/api/status/${q.question_num}?unit=${encodeURIComponent(q.unit)}`)
     .then(r => r.json())
     .then(d => {
-      const btn = document.getElementById(`gen-btn-${num}`)
-      if (!btn) return
       if (d.status === 'done') {
-        btn.textContent = '表示'
-        btn.className = 'btn btn-view'
-        btn.onclick = () => openViewer(d.url, `第${num}問`)
-      } else if (d.status === 'running') {
-        btn.textContent = '生成中…'
-        btn.disabled = true
-        setTimeout(() => checkStatus(num, unit), 2000)
+        viewBtn.style.display = 'block'
+        viewBtn.onclick = () => { closeQuiz(); openViewer(d.url, `第${q.question_num}問`) }
       }
     })
 }
 
-function generate(num, unit, force=false) {
-  const btn = document.getElementById(`gen-btn-${num}`)
+function nextQuestion() {
+  const questions = quizMode === 'drill' ? currentDrillQuestions : currentQuestions
+  const next = currentQuizIndex + 1
+  if (next < questions.length) {
+    if (quizMode === 'drill') openDrillQuiz(next)
+    else openQuiz(next)
+  } else {
+    closeQuiz()
+  }
+}
+
+// ────────────────────────────────────────────────
+// ストーリー生成・表示
+// ────────────────────────────────────────────────
+function checkStatus(bid, num, unit) {
+  fetch(`/api/status/${num}?unit=${encodeURIComponent(unit)}`)
+    .then(r => r.json())
+    .then(d => {
+      const btn = document.getElementById(`gen-btn-${bid}`)
+      if (!btn) return
+      if (d.status === 'done') {
+        btn.textContent = '表示'
+        btn.className = 'btn btn-view'
+        btn.disabled = false
+        btn.style.background = ''
+        btn.style.color = ''
+        btn.onclick = () => openViewer(d.url, `第${num}問`)
+      } else if (d.status === 'running') {
+        btn.textContent = '生成中…'
+        btn.className = 'btn'
+        btn.disabled = true
+        btn.style.background = '#bbb'
+        btn.style.color = ''
+        setTimeout(() => checkStatus(bid, num, unit), 2000)
+      } else if (d.status && d.status.startsWith('error')) {
+        btn.textContent = 'エラー'
+        btn.className = 'btn'
+        btn.disabled = false
+        btn.style.background = '#e53935'
+        btn.style.color = '#fff'
+        btn.onclick = () => generate(bid, num, unit, true)
+      }
+    })
+}
+
+function generate(bid, num, unit, force=false) {
+  const btn = document.getElementById(`gen-btn-${bid}`)
+  if (!btn) return
   btn.textContent = '生成中…'
+  btn.className = 'btn'
   btn.disabled = true
+  btn.style.background = '#bbb'
   fetch(`/api/generate/${num}?unit=${encodeURIComponent(unit)}&force=${force}`, { method: 'POST' })
     .then(() => {
       const poll = setInterval(() => {
@@ -474,15 +1576,79 @@ function generate(num, unit, force=false) {
               btn.textContent = '表示'
               btn.className = 'btn btn-view'
               btn.disabled = false
+              btn.style.background = ''
               btn.onclick = () => openViewer(d.url, `第${num}問`)
             } else if (d.status && d.status.startsWith('error')) {
               clearInterval(poll)
               btn.textContent = 'エラー'
               btn.disabled = false
+              btn.style.background = '#e53935'
+              btn.style.color = '#fff'
             }
           })
       }, 2500)
     })
+}
+
+// ────────────────────────────────────────────────
+// 自動生成
+// ────────────────────────────────────────────────
+let autoGenInterval = null
+
+function triggerAutoGenerate(book, part, chapter) {
+  fetch(`/api/generate/auto?book=${book}&part=${part}&chapter=${chapter}`, { method: 'POST' })
+    .then(r => r.json())
+    .then(d => { startAutoStatusPoll(book, part, chapter) })
+    .catch(() => {})
+}
+
+function startAutoStatusPoll(book, part, chapter) {
+  if (autoGenInterval) clearInterval(autoGenInterval)
+
+  const checkAndUpdate = () => {
+    if (!currentChapter ||
+        currentChapter.book !== book ||
+        currentChapter.part !== part ||
+        currentChapter.chapter !== chapter) {
+      clearInterval(autoGenInterval)
+      return
+    }
+    fetch(`/api/generate/auto/status?book=${book}&part=${part}&chapter=${chapter}`)
+      .then(r => r.json())
+      .then(d => {
+        updateAutoGenBar(d)
+        // 未完了のボタンを再チェック
+        if (currentQuestions) {
+          currentQuestions.forEach(q => {
+            const bid = q.id || q.question_num
+            const btn = document.getElementById(`gen-btn-${bid}`)
+            if (btn && btn.textContent !== '表示') {
+              checkStatus(bid, q.question_num, q.unit)
+            }
+          })
+        }
+        if (d.status === 'done' || (d.queued === 0 && d.running === 0)) {
+          clearInterval(autoGenInterval)
+          updateAutoGenBar(d)
+        }
+      })
+      .catch(() => {})
+  }
+
+  checkAndUpdate()
+  autoGenInterval = setInterval(checkAndUpdate, 10000)
+}
+
+function updateAutoGenBar(d) {
+  const bar  = document.getElementById('auto-gen-bar')
+  const ctr  = document.getElementById('auto-gen-counter')
+  const fill = document.getElementById('auto-gen-fill')
+  if (!bar || d.total === 0) return
+  const pct = Math.round(d.done / d.total * 100)
+  fill.style.width = pct + '%'
+  const isRunning = d.status === 'running' || d.running > 0 || d.queued > 0
+  ctr.textContent = `${d.done} / ${d.total}問${isRunning ? ' 生成中...' : ' 完了'}`
+  bar.style.display = (isRunning || d.done < d.total) ? 'flex' : 'none'
 }
 
 // ────────────────────────────────────────────────
@@ -513,6 +1679,9 @@ function getFormData() {
     answer: document.querySelector('input[name=answer]:checked').value,
     explanation: document.getElementById('f-exp').value.trim(),
     exam_source: document.getElementById('f-src').value.trim(),
+    book: currentChapter ? currentChapter.book : 0,
+    part: currentChapter ? currentChapter.part : 0,
+    chapter: currentChapter ? currentChapter.chapter : 0,
   }
 }
 function showMsg(msg, color='#4caf50') {
@@ -534,7 +1703,7 @@ async function saveAndGenerate() {
   if (!d.question_text || !d.question_num) { showMsg('問題文と問番号は必須です', '#f44336'); return }
   await fetch('/api/questions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(d) })
   showMsg('保存してストーリー生成中…（20秒ほどかかります）')
-  const r = await fetch(`/api/generate/${d.question_num}?unit=${encodeURIComponent(d.unit)}`, { method:'POST' })
+  await fetch(`/api/generate/${d.question_num}?unit=${encodeURIComponent(d.unit)}`, { method:'POST' })
   const poll = setInterval(async () => {
     const s = await fetch(`/api/status/${d.question_num}?unit=${encodeURIComponent(d.unit)}`).then(r=>r.json())
     if (s.status === 'done') {
@@ -568,7 +1737,6 @@ async function sendChat() {
   appendMsg('user', text, '👦', 'Yasu')
   chatHistory.push({ role: 'user', content: text })
 
-  // タイピング表示
   const typingEl = appendTyping()
 
   const r = await fetch('/api/chat', {
@@ -608,8 +1776,1121 @@ function appendTyping() {
   return div
 }
 
+// ────────────────────────────────────────────────
+// 脳トレ
+// ────────────────────────────────────────────────
+function drillChapterKey() {
+  if (!currentDrillChapter) return null
+  return `${currentDrillChapter.book}-${currentDrillChapter.part}-${currentDrillChapter.chapter}`
+}
+function getDrillResult(num) {
+  const key = drillChapterKey()
+  return key ? (drillResults[key] || {})[num] || null : null
+}
+function setDrillResult(num, result) {
+  const key = drillChapterKey()
+  if (!key) return
+  if (!drillResults[key]) drillResults[key] = {}
+  drillResults[key][num] = result
+  saveProgressToServer('drill_results', drillResults)
+  notifyScheduleChange()
+}
+
+function renderDrillProgress() {
+  const key = drillChapterKey()
+  const row = document.getElementById('drill-progress-row')
+  if (!key || !currentDrillQuestions.length) { row.style.display = 'none'; return }
+  const results = drillResults[key] || {}
+  const answered = Object.keys(results).length
+  const correct = Object.values(results).filter(v => v === 'correct').length
+  const total = currentDrillQuestions.length
+  row.style.display = 'flex'
+  document.getElementById('drill-progress-text').textContent =
+    `${total}問中 ${correct}問正解（${answered}問回答済み）`
+  const pct = total > 0 ? Math.round(correct / total * 100) : 0
+  document.getElementById('drill-progress-fill').style.width = pct + '%'
+}
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+}
+
+function recordDrillAttempt() {
+  const key = drillChapterKey()
+  if (!key || !currentDrillQuestions.length) return
+  const results = drillResults[key] || {}
+  const answered = Object.keys(results).length
+  if (answered === 0) return
+  const correct = Object.values(results).filter(v => v === 'correct').length
+  const rec = { ts: new Date().toISOString(), correct, answered, total: currentDrillQuestions.length }
+  if (!drillHistory[key]) drillHistory[key] = []
+  drillHistory[key].push(rec)
+  saveProgressToServer('drill_history', drillHistory)
+  notifyScheduleChange()
+}
+
+function resetDrillProgress() {
+  recordDrillAttempt()
+  const key = drillChapterKey()
+  if (!key) return
+  delete drillResults[key]
+  saveProgressToServer('drill_results', drillResults)
+  notifyScheduleChange()
+  shuffleArray(currentDrillQuestions)
+  renderDrillProgress()
+  renderDrillList(currentDrillQuestions)
+}
+
+async function changeDrillQuestions() {
+  if (!confirm('問題を作り直しますか？\n60秒ほどかかります。')) return
+  const key = drillChapterKey()
+  if (!key || !currentDrillChapter) return
+  delete drillResults[key]
+  saveProgressToServer('drill_results', drillResults)
+  const { book, part, chapter } = currentDrillChapter
+  document.getElementById('drill-list').innerHTML =
+    '<div class="drill-loading"><div class="spinner"></div><br>🧠 新しい問題を生成中…<br>初回・リセット時は60秒程度かかります</div>'
+  await fetch(`/api/drill?book=${book}&part=${part}&chapter=${chapter}`, { method: 'DELETE' })
+  loadDrillQuestions(book, part, chapter)
+}
+
+function renderDrillTree() {
+  const el = document.getElementById('drill-tree')
+  if (!el) return
+  let html = ''
+  for (const bk of TREE) {
+    html += `<div class="tree-book"><div class="tree-book-title">${bk.label}</div>`
+    for (const pt of bk.parts) {
+      html += `<div class="tree-part-title">${pt.label}</div>`
+      for (const [ch, name] of pt.chapters) {
+        const key = `${bk.book}-${pt.part}-${ch}`
+        const cnt = chapterCounts[key] || 0
+        const isActive = currentDrillChapter &&
+          currentDrillChapter.book === bk.book &&
+          currentDrillChapter.part === pt.part &&
+          currentDrillChapter.chapter === ch
+        html += `<div class="tree-chapter${isActive?' active':''}" onclick="selectDrillChapter(${bk.book},${pt.part},${ch},'${name.replace(/'/g,"\\'")}')">
+          <span class="tree-ch-name">${name}</span><span class="tree-cnt">${cnt}問</span></div>`
+      }
+    }
+    html += '</div>'
+  }
+  el.innerHTML = html
+}
+
+function selectDrillChapter(book, part, chapter, label) {
+  currentDrillChapter = { book, part, chapter, label }
+  document.getElementById('drill-chapter-label').textContent = label
+  document.querySelector('.drill-wrap').classList.add('show-list')
+  renderDrillTree()
+  loadDrillQuestions(book, part, chapter)
+}
+
+function drillGoBack() {
+  document.querySelector('.drill-wrap').classList.remove('show-list')
+}
+
+async function loadDrillQuestions(book, part, chapter) {
+  const listEl = document.getElementById('drill-list')
+  listEl.innerHTML =
+    '<div class="drill-loading"><div class="spinner"></div><br>🧠 問題を準備中…<br>初回・リセット時は60秒程度かかります</div>'
+  try {
+    const questions = await fetch(`/api/drill?book=${book}&part=${part}&chapter=${chapter}`).then(r => r.json())
+    currentDrillQuestions = questions
+    renderDrillProgress()
+    renderDrillList(questions)
+  } catch(e) {
+    listEl.innerHTML = '<div class="drill-loading" style="color:#f44336">エラーが発生しました。再度お試しください。</div>'
+  }
+}
+
+function drillBadgeHtml(num) {
+  const r = getDrillResult(num)
+  if (r === 'correct') return '<div class="q-badge correct">✓</div>'
+  if (r === 'wrong')   return '<div class="q-badge wrong">✗</div>'
+  return '<div class="q-badge unanswered">○</div>'
+}
+
+function renderDrillList(questions) {
+  const el = document.getElementById('drill-list')
+  if (!questions.length) {
+    el.innerHTML = '<p style="color:#aaa;padding:20px">問題がありません</p>'
+    return
+  }
+  el.innerHTML = questions.map((q, idx) => `
+    <div class="drill-card">
+      <div id="drill-badge-${q.question_num}">${drillBadgeHtml(q.question_num)}</div>
+      <div class="q-card-body" onclick="openDrillQuiz(${idx})">
+        <div class="q-num" style="color:#c2185b;">🧠 応用  第${q.question_num}問</div>
+        <div class="q-text">${q.question_text}</div>
+      </div>
+    </div>`).join('')
+}
+
+function openDrillQuiz(idx) {
+  quizMode = 'drill'
+  const q = currentDrillQuestions[idx]
+  if (!q) return
+  currentQuizIndex = idx
+  currentQuizQ = q
+  renderAnswerButtons(q)
+
+  document.getElementById('quiz-qnum').textContent = `応用 第${q.question_num}問`
+  document.getElementById('quiz-topic').textContent = '🧠 脳トレ'
+  document.getElementById('quiz-text').textContent = q.question_text
+
+  const existing = getDrillResult(q.question_num)
+  if (existing) {
+    document.getElementById('quiz-answer-area').style.display = 'none'
+    showDrillResult(q, existing === 'correct')
+  } else {
+    document.getElementById('quiz-answer-area').style.display = 'flex'
+    document.getElementById('quiz-result-area').style.display = 'none'
+  }
+
+  document.getElementById('quiz-next-btn').textContent =
+    idx < currentDrillQuestions.length - 1 ? '次の問題 →' : '終了'
+  document.getElementById('quiz-modal').classList.add('open')
+}
+
+function showDrillResult(q, isCorrect) {
+  document.getElementById('quiz-result-area').style.display = 'block'
+  const label = document.getElementById('quiz-result-label')
+  label.textContent = isCorrect ? '✓ 正解！' : '✗ 不正解'
+  label.className = `quiz-result-label ${isCorrect ? 'correct' : 'wrong'}`
+  document.getElementById('quiz-correct-answer').textContent = `正解: ${q.answer}`
+  document.getElementById('quiz-explanation').textContent = q.explanation || ''
+  document.getElementById('quiz-view-btn').style.display = 'none'
+}
+
+// ────────────────────────────────────────────────
+// 進捗スケジュール
+// ────────────────────────────────────────────────
+const SCHEDULE = [
+  { month:5, wnum:1,  start:'5/1',  end:'5/7',  chapters:[{b:1,p:1,c:1},{b:1,p:1,c:2}] },
+  { month:5, wnum:2,  start:'5/8',  end:'5/14', chapters:[{b:1,p:1,c:3},{b:1,p:1,c:4},{b:1,p:1,c:5}] },
+  { month:5, wnum:3,  start:'5/15', end:'5/21', chapters:[{b:1,p:2,c:1},{b:1,p:2,c:2},{b:1,p:2,c:3}] },
+  { month:5, wnum:4,  start:'5/22', end:'5/31', chapters:[{b:1,p:2,c:4},{b:1,p:2,c:5},{b:1,p:2,c:6}] },
+  { month:6, wnum:5,  start:'6/1',  end:'6/7',  chapters:[{b:2,p:1,c:1},{b:2,p:1,c:2},{b:2,p:1,c:3}] },
+  { month:6, wnum:6,  start:'6/8',  end:'6/14', chapters:[{b:2,p:1,c:4},{b:2,p:1,c:5},{b:2,p:1,c:6}] },
+  { month:6, wnum:7,  start:'6/15', end:'6/21', chapters:[{b:2,p:1,c:7},{b:2,p:2,c:1},{b:2,p:2,c:2}] },
+  { month:6, wnum:8,  start:'6/22', end:'6/30', chapters:[{b:2,p:2,c:3},{b:2,p:2,c:4},{b:2,p:2,c:5}] },
+  { month:7, wnum:9,  start:'7/1',  end:'7/7',  chapters:[{b:3,p:1,c:1},{b:3,p:1,c:2},{b:3,p:1,c:3},{b:3,p:1,c:4},{b:3,p:1,c:5},{b:3,p:1,c:6}] },
+  { month:7, wnum:10, start:'7/8',  end:'7/14', chapters:[{b:3,p:1,c:7},{b:3,p:1,c:8},{b:3,p:1,c:9},{b:3,p:1,c:10},{b:3,p:1,c:11},{b:3,p:1,c:12}] },
+  { month:7, wnum:11, start:'7/15', end:'7/21', chapters:[{b:3,p:1,c:13},{b:3,p:1,c:14},{b:3,p:1,c:15},{b:3,p:1,c:16},{b:3,p:1,c:17},{b:3,p:1,c:18}] },
+  { month:7, wnum:12, start:'7/22', end:'7/31', chapters:[{b:3,p:2,c:1},{b:3,p:2,c:2},{b:3,p:2,c:3},{b:3,p:2,c:4},{b:3,p:2,c:5},{b:3,p:2,c:6}] },
+]
+
+let scheduleMonth = 5
+
+function buildChapterMap() {
+  const map = {}
+  for (const bk of TREE) {
+    for (const pt of bk.parts) {
+      for (const [ch, name] of pt.chapters) {
+        map[`${bk.book}-${pt.part}-${ch}`] = name
+      }
+    }
+  }
+  return map
+}
+
+function getChapterStatus(b, p, c) {
+  const key = `${b}-${p}-${c}`
+  const total = chapterCounts[key] || 0
+  if (total === 0) return 'no-data'
+  const libRes = quizResults[key] || {}
+  const answered = Object.keys(libRes).length
+  const libDone = answered >= total
+  const dHist = drillHistory[key] || []
+  const completed = dHist.filter(r => r.answered >= r.total)
+  const bestDrill = completed.length > 0 ? Math.max(...completed.map(r => Math.round(r.correct / r.total * 100))) : null
+  const drillDone = bestDrill !== null && bestDrill >= 80
+  if (libDone && drillDone) return 'clear'
+  if (libDone) return 'lib-only'
+  if (drillDone) return 'drill-only'
+  const lHist = libHistory[key] || []
+  if (answered > 0 || dHist.length > 0 || lHist.length > 0) return 'in-progress'
+  return 'untouched'
+}
+
+function statusIcon(status) {
+  return { clear:'✅', 'lib-only':'📚', 'drill-only':'🧠', 'in-progress':'△', untouched:'○', 'no-data':'🔲' }[status] || '○'
+}
+
+function getLibBadgeText(key) {
+  const hist = libHistory[key] || []
+  const cur = quizResults[key] || {}
+  const answeredNow = Object.keys(cur).length
+  const count = hist.length + (answeredNow > 0 ? 1 : 0)
+  if (count === 0) return null
+  const total = chapterCounts[key] || 0
+  const completedScores = hist.filter(r => r.answered >= r.total).map(r => Math.round(r.correct / r.total * 100))
+  const correctNow = Object.values(cur).filter(v => v === 'correct').length
+  if (total > 0 && answeredNow >= total) completedScores.push(Math.round(correctNow / total * 100))
+  if (completedScores.length > 0) return `📚 ${count}回 ${Math.max(...completedScores)}%`
+  return `📚 ${count}回`
+}
+
+function getDrillBadgeText(key) {
+  const hist = drillHistory[key] || []
+  const cur = drillResults[key] || {}
+  const answeredNow = Object.keys(cur).length
+  const count = hist.length + (answeredNow > 0 ? 1 : 0)
+  if (count === 0) return null
+  const completedScores = hist.filter(r => r.answered >= r.total).map(r => Math.round(r.correct / r.total * 100))
+  if (completedScores.length > 0) {
+    const best = Math.max(...completedScores)
+    return `🧠 ${count}回 ${best}%${best >= 80 ? '★' : ''}`
+  }
+  return `🧠 ${count}回`
+}
+
+function chDetailHtml(key) {
+  const lHist = libHistory[key] || []
+  const dHist = drillHistory[key] || []
+  let html = ''
+
+  if (lHist.length > 0) {
+    html += '<div class="hist-section-title">📚 ライブラリ履歴</div>'
+    const scores = lHist.filter(r => r.answered >= r.total).map(r => Math.round(r.correct / r.total * 100))
+    const best = scores.length > 0 ? Math.max(...scores) : null
+    lHist.forEach((r, i) => {
+      const d = new Date(r.ts).toLocaleDateString('ja-JP', {month:'numeric', day:'numeric'})
+      let s
+      if (r.answered >= r.total) {
+        const pct = Math.round(r.correct / r.total * 100)
+        s = `<span style="color:${pct>=80?'#4caf50':'#555'}">${pct}%${pct===best?' ★':''}</span>`
+      } else {
+        s = `<span style="color:#aaa">${r.answered}問 途中</span>`
+      }
+      html += `<div class="hist-entry"><span>${i+1}回目</span><span style="color:#aaa">(${d})</span>${s}</div>`
+    })
+  }
+
+  if (dHist.length > 0) {
+    html += '<div class="hist-section-title" style="margin-top:6px">🧠 脳トレ履歴</div>'
+    const scores = dHist.filter(r => r.answered >= r.total).map(r => Math.round(r.correct / r.total * 100))
+    const best = scores.length > 0 ? Math.max(...scores) : null
+    dHist.forEach((r, i) => {
+      const d = new Date(r.ts).toLocaleDateString('ja-JP', {month:'numeric', day:'numeric'})
+      let s
+      if (r.answered >= r.total) {
+        const pct = Math.round(r.correct / r.total * 100)
+        s = `<span style="color:${pct>=80?'#4caf50':'#555'}">${pct}%${pct>=80?' ✓':''}${pct===best?' ★':''}</span>`
+      } else {
+        s = `<span style="color:#aaa">${r.answered}問 途中</span>`
+      }
+      html += `<div class="hist-entry"><span>${i+1}回目</span><span style="color:#aaa">(${d})</span>${s}</div>`
+    })
+  }
+
+  return html || '<div style="color:#aaa;font-size:11px;padding:2px 0">履歴なし</div>'
+}
+
+function toggleChDetail(key) {
+  const el = document.getElementById(`chdet-${key}`)
+  if (el) el.classList.toggle('open')
+}
+
+function getCurrentWeek() {
+  const today = new Date()
+  for (const w of SCHEDULE) {
+    const [sm, sd] = w.start.split('/').map(Number)
+    const [em, ed] = w.end.split('/').map(Number)
+    if (today >= new Date(2026, sm-1, sd) && today <= new Date(2026, em-1, ed, 23, 59)) return w.wnum
+  }
+  return null
+}
+
+function notifyScheduleChange() {
+  if (document.getElementById('panel-schedule').classList.contains('active')) {
+    renderSchedule()
+  }
+}
+
+function renderSchedule() {
+  const chMap = buildChapterMap()
+  const today = new Date()
+  const m = today.getMonth() + 1, y = today.getFullYear()
+  if (y === 2026 && m >= 5 && m <= 7) scheduleMonth = m
+
+  // バナー
+  const total = 47
+  let cleared = 0
+  for (const w of SCHEDULE) {
+    for (const {b,p,c} of w.chapters) { if (getChapterStatus(b,p,c) === 'clear') cleared++ }
+  }
+  const pct = Math.round(cleared / total * 100)
+  const daysLeft = Math.max(0, Math.ceil((new Date(2026,6,31) - today) / 86400000))
+  const todayStr = today.toLocaleDateString('ja-JP', {month:'numeric', day:'numeric', weekday:'short'})
+
+  document.getElementById('sched-banner').innerHTML = `
+    <div class="sched-banner-title">民法Ⅰ〜Ⅲ 第1周</div>
+    <div class="sched-prog-row">
+      <div class="sched-prog-bar"><div class="sched-prog-fill" style="width:${pct}%"></div></div>
+      <span class="sched-prog-text">${cleared} / ${total}章 クリア</span>
+    </div>
+    <div class="sched-banner-sub">2026年5月〜7月 目標　今日: ${todayStr}　残り${daysLeft}日</div>
+  `
+
+  // 月タブ
+  document.getElementById('sched-month-tabs').innerHTML = [5,6,7].map(mo => {
+    const chs = SCHEDULE.filter(w => w.month === mo).flatMap(w => w.chapters)
+    const cl = chs.filter(({b,p,c}) => getChapterStatus(b,p,c) === 'clear').length
+    return `<button class="sched-month-btn${scheduleMonth===mo?' active':''}" onclick="switchSchedMonth(${mo})">${mo}月 ${cl}/${chs.length}</button>`
+  }).join('')
+
+  // 週カード
+  const curW = getCurrentWeek()
+  document.getElementById('sched-body').innerHTML = SCHEDULE.filter(w => w.month === scheduleMonth).map(w => {
+    const isCur = w.wnum === curW
+    const cl = w.chapters.filter(({b,p,c}) => getChapterStatus(b,p,c) === 'clear').length
+    const rows = w.chapters.map(({b,p,c}) => {
+      const key = `${b}-${p}-${c}`
+      const name = chMap[key] || key
+      const icon = statusIcon(getChapterStatus(b,p,c))
+      const lb = getLibBadgeText(key)
+      const db = getDrillBadgeText(key)
+      return `
+        <div class="ch-row" onclick="toggleChDetail('${key}')">
+          <span class="ch-status-icon">${icon}</span>
+          <span class="ch-name">${name}</span>
+          ${lb ? `<span class="ch-lib-badge">${lb}</span>` : ''}
+          ${db ? `<span class="ch-drill-badge">${db}</span>` : ''}
+        </div>
+        <div class="ch-detail" id="chdet-${key}">${chDetailHtml(key)}</div>`
+    }).join('')
+    return `
+      <div class="week-card">
+        <div class="week-header${isCur?' current-week':''}">
+          <span class="week-label">W${w.wnum}</span>
+          <span class="week-dates">${w.start}〜${w.end}</span>
+          <span class="week-cnt">${isCur ? '← 今週' : `${cl}/${w.chapters.length}`}</span>
+        </div>${rows}
+      </div>`
+  }).join('')
+}
+
+function switchSchedMonth(mo) {
+  scheduleMonth = mo
+  renderSchedule()
+}
+
+// ────────────────────────────────────────────────
+// 設定・パスワード
+// ────────────────────────────────────────────────
+let pwFailCount = 0
+const SETTINGS_PW = '123456'
+
+function openSettingsGate() {
+  if (pwFailCount >= 3) { alert('ロックされました。再読込してください。'); return }
+  document.getElementById('pw-input').value = ''
+  document.getElementById('pw-error').textContent = ''
+  document.getElementById('pw-modal').classList.add('open')
+  setTimeout(() => document.getElementById('pw-input').focus(), 100)
+}
+
+function onPwModalClick(e) {
+  if (e.target === document.getElementById('pw-modal')) {
+    document.getElementById('pw-modal').classList.remove('open')
+  }
+}
+
+function submitPassword() {
+  const val = document.getElementById('pw-input').value
+  if (val === SETTINGS_PW) {
+    pwFailCount = 0
+    document.getElementById('pw-modal').classList.remove('open')
+    openSettings()
+  } else {
+    pwFailCount++
+    document.getElementById('pw-input').value = ''
+    if (pwFailCount >= 3) {
+      document.getElementById('pw-error').textContent = 'ロックされました。再読込してください。'
+    } else {
+      document.getElementById('pw-error').textContent = `パスワードが違います（残り${3 - pwFailCount}回）`
+    }
+  }
+}
+
+let settingsCurrentKey = ''
+
+function openSettings() {
+  const chMap = buildChapterMap()
+  const select = document.getElementById('settings-ch-select')
+  select.innerHTML = '<option value="">── 章を選択 ──</option>'
+  for (const w of SCHEDULE) {
+    for (const {b, p, c} of w.chapters) {
+      const key = `${b}-${p}-${c}`
+      const name = chMap[key] || key
+      const lCnt = (libHistory[key] || []).length
+      const dCnt = (drillHistory[key] || []).length
+      const badge = (lCnt > 0 || dCnt > 0) ? ` (📚${lCnt} 🧠${dCnt})` : ''
+      const opt = document.createElement('option')
+      opt.value = key
+      opt.textContent = name + badge
+      select.appendChild(opt)
+    }
+  }
+  settingsCurrentKey = ''
+  document.getElementById('settings-hist').innerHTML =
+    '<p style="color:#aaa;padding:20px;text-align:center;font-size:13px">章を選択してください</p>'
+  document.getElementById('settings-modal').classList.add('open')
+}
+
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('open')
+}
+
+function onSettingsModalClick(e) {
+  if (e.target === document.getElementById('settings-modal')) closeSettings()
+}
+
+function onSettingsChChange() {
+  settingsCurrentKey = document.getElementById('settings-ch-select').value
+  renderSettingsHistory()
+}
+
+function renderSettingsHistory() {
+  const el = document.getElementById('settings-hist')
+  if (!settingsCurrentKey) {
+    el.innerHTML = '<p style="color:#aaa;padding:20px;text-align:center;font-size:13px">章を選択してください</p>'
+    return
+  }
+  const key = settingsCurrentKey
+  const total = chapterCounts[key] || 0
+  const lHist = libHistory[key] || []
+  const dHist = drillHistory[key] || []
+
+  // 現在の進捗
+  const curLib = quizResults[key] || {}
+  const curLibAns = Object.keys(curLib).length
+  const curLibOk = Object.values(curLib).filter(v => v === 'correct').length
+  const curDrill = drillResults[key] || {}
+  const curDrillAns = Object.keys(curDrill).length
+  const curDrillOk = Object.values(curDrill).filter(v => v === 'correct').length
+
+  const histRows = (recs, type) => recs.map((r, i) => {
+    const d = new Date(r.ts).toLocaleDateString('ja-JP', {month:'numeric', day:'numeric'})
+    const score = r.answered >= r.total
+      ? `${Math.round(r.correct / r.total * 100)}%`
+      : `${r.answered}問 途中`
+    return `<div class="settings-hist-row">
+      <span class="sh-idx">${i+1}回目</span>
+      <span class="sh-date">(${d})</span>
+      <span class="sh-score">${score}</span>
+      <button class="settings-del-btn" onclick="deleteHistEntry('${type}','${key}',${i})">削除</button>
+    </div>`
+  }).join('')
+
+  // ライブラリセクション
+  let libCurHtml = ''
+  if (curLibAns > 0) {
+    const pct = total > 0 ? Math.round(curLibOk / total * 100) : 0
+    libCurHtml = `<div class="settings-hist-row" style="background:#fffde7;border-radius:6px;padding:6px 8px;margin-bottom:6px;">
+      <span class="sh-idx" style="color:#f59800">今回</span>
+      <span class="sh-date"></span>
+      <span class="sh-score">${curLibAns}/${total}問（${pct}%）</span>
+      <button class="settings-del-btn" onclick="clearCurrentSession('lib','${key}')">クリア</button>
+    </div>`
+  }
+
+  // 脳トレセクション
+  let drillCurHtml = ''
+  if (curDrillAns > 0) {
+    const drillTotal = currentDrillQuestions.length || curDrillAns
+    const pct = drillTotal > 0 ? Math.round(curDrillOk / drillTotal * 100) : 0
+    drillCurHtml = `<div class="settings-hist-row" style="background:#fffde7;border-radius:6px;padding:6px 8px;margin-bottom:6px;">
+      <span class="sh-idx" style="color:#f59800">今回</span>
+      <span class="sh-date"></span>
+      <span class="sh-score">${curDrillAns}問回答済み（${pct}%）</span>
+      <button class="settings-del-btn" onclick="clearCurrentSession('drill','${key}')">クリア</button>
+    </div>`
+  }
+
+  let html = `
+    <div class="settings-section">
+      <div class="settings-section-title">📚 ライブラリ</div>
+      ${libCurHtml}
+      ${lHist.length > 0
+        ? `<div style="font-size:11px;color:#888;margin:4px 0 4px;">過去の記録（${lHist.length}件）</div>`
+          + histRows(lHist, 'lib')
+          + `<button class="settings-clear-btn" onclick="clearHistAll('lib','${key}')">過去の記録をすべて削除</button>`
+        : (curLibAns === 0 ? '<p style="color:#aaa;font-size:12px;padding:4px 0">データなし</p>' : '<p style="color:#aaa;font-size:12px;padding:4px 0">過去の記録なし</p>')}
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">🧠 脳トレ</div>
+      ${drillCurHtml}
+      ${dHist.length > 0
+        ? `<div style="font-size:11px;color:#888;margin:4px 0 4px;">過去の記録（${dHist.length}件）</div>`
+          + histRows(dHist, 'drill')
+          + `<button class="settings-clear-btn" onclick="clearHistAll('drill','${key}')">過去の記録をすべて削除</button>`
+        : (curDrillAns === 0 ? '<p style="color:#aaa;font-size:12px;padding:4px 0">データなし</p>' : '<p style="color:#aaa;font-size:12px;padding:4px 0">過去の記録なし</p>')}
+    </div>`
+  el.innerHTML = html
+
+  // セレクトのバッジを更新
+  const chMap = buildChapterMap()
+  Array.from(document.getElementById('settings-ch-select').options).forEach(opt => {
+    if (!opt.value) return
+    const k = opt.value
+    const lC = (libHistory[k] || []).length + (Object.keys(quizResults[k] || {}).length > 0 ? 1 : 0)
+    const dC = (drillHistory[k] || []).length + (Object.keys(drillResults[k] || {}).length > 0 ? 1 : 0)
+    const badge = (lC > 0 || dC > 0) ? ` (📚${lC} 🧠${dC})` : ''
+    opt.textContent = (chMap[k] || k) + badge
+  })
+}
+
+function clearCurrentSession(type, key) {
+  if (type === 'lib') {
+    delete quizResults[key]
+    saveProgressToServer('quiz_results', quizResults)
+  } else {
+    delete drillResults[key]
+    saveProgressToServer('drill_results', drillResults)
+  }
+  notifyScheduleChange()
+  renderSettingsHistory()
+}
+
+function deleteHistEntry(type, key, index) {
+  const store = type === 'lib' ? libHistory : drillHistory
+  const storeKey = type === 'lib' ? 'lib_history' : 'drill_history'
+  if (!store[key]) return
+  store[key].splice(index, 1)
+  if (store[key].length === 0) delete store[key]
+  saveProgressToServer(storeKey, store)
+  renderSettingsHistory()
+}
+
+function clearHistAll(type, key) {
+  const store = type === 'lib' ? libHistory : drillHistory
+  const storeKey = type === 'lib' ? 'lib_history' : 'drill_history'
+  delete store[key]
+  saveProgressToServer(storeKey, store)
+  renderSettingsHistory()
+}
+
+function resetAllData() {
+  if (!confirm('すべての履歴・進捗を消去します。\n元に戻せません。よろしいですか？')) return
+  libHistory = {}; drillHistory = {}; quizResults = {}; drillResults = {}
+  ;['lib_history','drill_history','quiz_results','drill_results'].forEach(k => {
+    localStorage.removeItem(k)
+    saveProgressToServer(k, {})
+  })
+  renderSettingsHistory()
+  alert('すべてのデータを消去しました。')
+}
+
 // 初期ロード
-loadQuestions()
+initTree()
+loadProgressFromServer()
+
+// ────────────────────────────────────────────────
+// 過去問
+// ────────────────────────────────────────────────
+let peYear = 5
+let pePart = '午前'
+let peMode = 'browse'
+let peFilter = 'all'
+let peQuestions = []
+let peAnswers = {}      // question_num → chosen (1-5)
+let peRevealed = {}     // question_num → true (閲覧モードで正解表示)
+let peExamIdx = 0
+let peExamDone = false
+
+const SUBJECT_COLORS = {
+  '民法': '#4f7ef7', '憲法': '#8c5cf6',
+  '商法': '#f59e0b', '商法・会社法': '#f59e0b',
+  '不動産登記法': '#10b981', '商業登記法': '#06b6d4',
+  '民事訴訟法': '#ec4899', '民事執行法': '#f97316',
+  '民事保全法': '#f97316', '供託法': '#84cc16',
+  '刑法': '#e11d48', '司法書士法': '#84cc16',
+}
+
+function togglePePanel() {
+  const panel = document.getElementById('pe-expand-panel')
+  const btn   = document.getElementById('pe-toggle-btn')
+  const open  = panel.classList.toggle('open')
+  btn.classList.toggle('open', open)
+}
+
+function setPeYear(y) {
+  peYear = y
+  document.querySelectorAll('.pe-year-btn').forEach((b, i) => b.classList.toggle('active', [5,6,7][i] === y))
+  loadPastExam()
+}
+function setPePart(p) {
+  pePart = p
+  document.querySelectorAll('.pe-part-btn').forEach((b, i) => b.classList.toggle('active', ['午前','午後'][i] === p))
+  loadPastExam()
+}
+function setPeFilter(f) {
+  peFilter = f
+  document.querySelectorAll('.pe-filter-btn').forEach(b => b.classList.toggle('active', b.textContent.trim() === f || (f === 'all' && b.textContent === '全問')))
+  renderPeBrowse()
+}
+function setPeMode(m) {
+  peMode = m
+  document.getElementById('pe-mode-browse').classList.toggle('active', m === 'browse')
+  document.getElementById('pe-mode-exam').classList.toggle('active', m === 'exam')
+  document.getElementById('pe-browse-area').style.display = m === 'browse' ? '' : 'none'
+  document.getElementById('pe-exam-area').style.display = m === 'exam' ? 'flex' : 'none'
+  document.getElementById('pe-exam-area').style.flexDirection = 'column'
+  if (m === 'exam') startPeExam()
+  else renderPeBrowse()
+}
+
+async function loadPastExam() {
+  peAnswers = {}
+  peRevealed = {}
+  peExamIdx = 0
+  peExamDone = false
+  document.getElementById('pe-question-list').innerHTML = '<div class="pe-loading">読み込み中…</div>'
+  const res = await fetch(`/api/past-exam/questions?year=${peYear}&part=${encodeURIComponent(pePart)}`)
+  peQuestions = await res.json()
+  if (peMode === 'browse') renderPeBrowse()
+  else startPeExam()
+}
+
+function filteredQuestions() {
+  if (peFilter === 'all') return peQuestions
+  if (peFilter === 'その他') {
+    const known = Object.keys(SUBJECT_COLORS)
+    return peQuestions.filter(q => !known.includes(q.subject || ''))
+  }
+  return peQuestions.filter(q => (q.subject || '').includes(peFilter))
+}
+
+function subjectTag(q) {
+  const s = q.subject || ''
+  if (!s) return ''
+  const color = SUBJECT_COLORS[s] || '#888'
+  return `<span class="pe-tag subject" style="background:${color}20;color:${color}">${s}</span>`
+}
+
+function chapterTag(q) {
+  if (!q.book || !q.chapter) return ''
+  const chMap = {}
+  for (const [b, bname, parts] of [[1,'民法Ⅰ',[[1,'基本編'],[2,'民法総則編'],[3,'物権編']]],[2,'民法Ⅱ',[[1,'担保物権編'],[2,'債権編']]],[3,'民法Ⅲ',[[1,'家族法編']]]]) {
+    for (const [p, pname] of parts) {
+      for (let c = 1; c <= 10; c++) chMap[`${b}-${p}-${c}`] = `${bname}`
+    }
+  }
+  return `<span class="pe-tag">📌 ${chMap[`${q.book}-${q.part_num}-${q.chapter}`] || '民法'} 第${q.chapter}章</span>`
+}
+
+function renderPeBrowse() {
+  const qs = filteredQuestions()
+  document.getElementById('pe-stats').textContent = `${qs.length}問`
+  if (qs.length === 0) {
+    document.getElementById('pe-question-list').innerHTML = '<div class="pe-loading">該当する問題がありません</div>'
+    return
+  }
+  document.getElementById('pe-question-list').innerHTML = qs.map(q => {
+    const chosen = peAnswers[q.question_num]
+    const revealed = peRevealed[q.question_num]
+    const isCorrect = chosen && q.correct && chosen === q.correct
+    const badgeHtml = chosen
+      ? `<span class="pe-result-badge ${isCorrect ? 'correct' : 'wrong'}">${isCorrect ? '✅ 正解' : '❌ 不正解'}</span>`
+      : ''
+    const choicesHtml = q.choices && q.choices.length
+      ? `<div class="pe-choices">${q.choices.map((c, i) => {
+          let cls = 'pe-choice-btn'
+          if (chosen) {
+            if (i+1 === q.correct) cls += ' correct-ans'
+            else if (i+1 === chosen) cls += ' wrong-ans'
+          } else if (chosen === i+1) cls += ' selected'
+          return `<button class="${cls}" onclick="peBrowseAnswer(${q.question_num}, ${i+1})">${i+1}：${c}</button>`
+        }).join('')}</div>`
+      : ''
+    const answerHtml = (revealed || chosen)
+      ? `<div class="pe-answer-reveal">正解：<strong>${q.correct}</strong></div>`
+      : `<button class="pe-show-answer-btn" onclick="peReveal(${q.question_num})">▼ 正解を見る</button>`
+    return `<div class="pe-card" id="pe-card-${q.question_num}">
+      <div class="pe-card-header">
+        <span class="pe-qnum">第${q.question_num}問</span>
+        ${subjectTag(q)}${chapterTag(q)}
+        ${badgeHtml}
+      </div>
+      <div class="pe-question-text">${q.question_text}</div>
+      ${choicesHtml}
+      ${answerHtml}
+    </div>`
+  }).join('')
+}
+
+function peBrowseAnswer(num, choice) {
+  peAnswers[num] = choice
+  renderPeBrowse()
+  document.getElementById(`pe-card-${num}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+}
+function peReveal(num) {
+  peRevealed[num] = true
+  renderPeBrowse()
+}
+
+// 試験モード
+function startPeExam() {
+  peExamIdx = 0
+  peExamDone = false
+  peAnswers = {}
+  document.getElementById('pe-exam-result').style.display = 'none'
+  renderPeExamQuestion()
+}
+
+function renderPeExamQuestion() {
+  const qs = filteredQuestions()
+  if (!qs.length) return
+  const q = qs[peExamIdx]
+  const total = qs.length
+  document.getElementById('pe-exam-progress').textContent = `${peExamIdx + 1} / ${total}問`
+  document.getElementById('pe-exam-bar').style.width = `${Math.round((peExamIdx + 1) / total * 100)}%`
+  document.getElementById('pe-btn-prev').disabled = peExamIdx === 0
+  document.getElementById('pe-btn-next').textContent = peExamIdx === total - 1 ? '採点 ✔' : '次へ ▶'
+  document.getElementById('pe-exam-question').textContent = `第${q.question_num}問\n\n${q.question_text}`
+  const chosen = peAnswers[q.question_num]
+  document.getElementById('pe-exam-choices').innerHTML = q.choices && q.choices.length
+    ? q.choices.map((c, i) => {
+        let cls = 'pe-exam-choice'
+        if (chosen === i+1) cls += ' selected'
+        return `<button class="${cls}" onclick="peExamChoose(${q.question_num}, ${i+1})">${i+1}：${c}</button>`
+      }).join('')
+    : [1,2,3,4,5].map(n => `<button class="pe-exam-choice${peAnswers[q.question_num]===n?' selected':''}" onclick="peExamChoose(${q.question_num},${n})">${n}</button>`).join('')
+}
+
+function peExamChoose(num, choice) {
+  peAnswers[num] = choice
+  renderPeExamQuestion()
+}
+function peExamPrev() {
+  if (peExamIdx > 0) { peExamIdx--; renderPeExamQuestion() }
+}
+function peExamNext() {
+  const qs = filteredQuestions()
+  if (peExamIdx < qs.length - 1) {
+    peExamIdx++
+    renderPeExamQuestion()
+  } else {
+    showPeResult(qs)
+  }
+}
+
+function showPeResult(qs) {
+  document.getElementById('pe-exam-result').style.display = 'block'
+  document.getElementById('pe-exam-question').style.display = 'none'
+  document.getElementById('pe-exam-choices').style.display = 'none'
+  document.getElementById('pe-exam-nav').style.display = 'none'
+
+  let correct = 0
+  const subjectStats = {}
+  qs.forEach(q => {
+    const chosen = peAnswers[q.question_num]
+    const ok = chosen && q.correct && chosen === q.correct
+    if (ok) correct++
+    const subj = q.subject || 'その他'
+    if (!subjectStats[subj]) subjectStats[subj] = { total: 0, correct: 0 }
+    subjectStats[subj].total++
+    if (ok) subjectStats[subj].correct++
+  })
+
+  const pct = Math.round(correct / qs.length * 100)
+  const breakdownHtml = Object.entries(subjectStats).map(([s, st]) => {
+    const p = Math.round(st.correct / st.total * 100)
+    const color = p >= 70 ? '#16a34a' : p >= 50 ? '#f59e0b' : '#dc2626'
+    return `<div class="pe-breakdown-row">
+      <span style="width:90px;flex-shrink:0">${s}</span>
+      <div class="pe-breakdown-bar-wrap"><div class="pe-breakdown-bar" style="width:${p}%;background:${color}"></div></div>
+      <span>${st.correct}/${st.total}問 (${p}%)</span>
+    </div>`
+  }).join('')
+
+  const detailHtml = qs.map(q => {
+    const chosen = peAnswers[q.question_num]
+    const ok = chosen && q.correct && chosen === q.correct
+    return `<div class="pe-result-row">
+      <span class="pe-result-badge ${chosen ? (ok?'correct':'wrong') : 'unanswered'}">${ok?'✅':'❌'}</span>
+      <span>第${q.question_num}問</span>
+      <span style="color:var(--muted);font-size:11px">${q.subject||''}</span>
+      <span style="margin-left:auto">選択:${chosen||'－'} 正解:${q.correct||'？'}</span>
+    </div>`
+  }).join('')
+
+  document.getElementById('pe-exam-result').innerHTML = `
+    <div class="pe-result-summary">
+      <div class="pe-result-score">${correct}<span style="font-size:20px;color:var(--muted)">/${qs.length}</span></div>
+      <div class="pe-result-label">令和${peYear}年度 ${pePart}の部 ・ 正答率 ${pct}%</div>
+    </div>
+    <div class="pe-result-breakdown">${breakdownHtml}</div>
+    <div style="text-align:center;margin:12px 0">
+      <button class="btn btn-primary" onclick="startPeExam()">もう一度挑戦</button>
+      <button class="btn btn-secondary" onclick="setPeMode('browse')" style="margin-left:8px">閲覧モードへ</button>
+    </div>
+    <div class="pe-result-detail">${detailHtml}</div>`
+}
+
+// ──────────────────────────────────────────────
+// 音声解説
+// ──────────────────────────────────────────────
+// 音声解説（条文単位）
+// ──────────────────────────────────────────────
+let audioState = { volume: 1, part: null, chapter: null };
+let audioToc = null;
+let audioPollers = {};  // article_num → intervalId
+let currentAudio = null;
+
+async function loadAudioToc() {
+  if (audioToc) return audioToc;
+  const res = await fetch('/api/audio/toc');
+  audioToc = await res.json();
+  return audioToc;
+}
+
+async function selectAudioVol(vol, btn) {
+  document.querySelectorAll('#audio-vol-row .audio-sel-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  audioState.volume = vol;
+  audioState.part = null;
+  audioState.chapter = null;
+
+  const toc = await loadAudioToc();
+  const volData = toc.find(v => v.volume === vol);
+  const partRow = document.getElementById('audio-part-row');
+  const chapRow = document.getElementById('audio-chap-row');
+  partRow.innerHTML = '<span class="audio-selector-label">部</span>';
+  chapRow.innerHTML = '';
+  document.getElementById('audio-topic-list').innerHTML = '<div class="audio-placeholder">部を選択してください</div>';
+
+  if (!volData) return;
+  volData.parts.forEach(p => {
+    const b = document.createElement('button');
+    b.className = 'audio-sel-btn';
+    b.textContent = `第${p.part}部`;
+    b.title = p.part_title;
+    b.onclick = () => selectAudioPart(vol, p, b);
+    partRow.appendChild(b);
+  });
+}
+
+async function selectAudioPart(vol, partData, btn) {
+  document.querySelectorAll('#audio-part-row .audio-sel-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  audioState.part = partData.part;
+  audioState.chapter = null;
+
+  const chapRow = document.getElementById('audio-chap-row');
+  chapRow.innerHTML = '<span class="audio-selector-label">章</span>';
+  document.getElementById('audio-topic-list').innerHTML = '<div class="audio-placeholder">章を選択してください</div>';
+
+  partData.chapters.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'audio-sel-btn';
+    b.textContent = `第${c.chapter}章`;
+    b.title = c.chapter_title;
+    b.onclick = () => selectAudioChapter(vol, partData.part, c.chapter, b);
+    chapRow.appendChild(b);
+  });
+}
+
+async function selectAudioChapter(vol, part, chapter, btn) {
+  document.querySelectorAll('#audio-chap-row .audio-sel-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  audioState.chapter = chapter;
+
+  // 📚ボタンを更新（既存を削除して再追加）
+  const chapRow = document.getElementById('audio-chap-row');
+  const existing = chapRow.querySelector('.audio-to-lib-btn');
+  if (existing) existing.remove();
+  const libBtn = document.createElement('button');
+  libBtn.className = 'audio-to-lib-btn';
+  libBtn.textContent = '📚 問題へ';
+  libBtn.onclick = () => jumpToLib(vol, part, chapter);
+  chapRow.appendChild(libBtn);
+
+  await loadAudioTopics(vol, part, chapter);
+}
+
+async function loadAudioTopics(vol, part, chapter) {
+  const list = document.getElementById('audio-topic-list');
+  list.innerHTML = '<div class="audio-placeholder">読み込み中...</div>';
+  const res = await fetch(`/api/audio/list?volume=${vol}&part=${part}&chapter=${chapter}`);
+  const topics = await res.json();
+  renderAudioTopics(topics);
+}
+
+function renderAudioTopics(topics) {
+  const list = document.getElementById('audio-topic-list');
+  if (!topics.length) {
+    list.innerHTML = '<div class="audio-placeholder">トピックなし</div>';
+    return;
+  }
+
+  list.innerHTML = topics.map(t => {
+    // 条文がないトピックは見出しのみ
+    if (!t.articles || !t.articles.length) {
+      return `<div class="audio-topic-header">
+        <span class="audio-topic-num">${t.topic_num}</span>
+        <span class="audio-topic-title">${t.topic_title}</span>
+        <span style="font-size:11px;color:#bbb">条文なし</span>
+      </div>`;
+    }
+
+    const articlesHtml = t.articles.map(a => {
+      const label = a.article_title
+        ? `🔊 第${a.article_num}条【${a.article_title}】`
+        : `🔊 第${a.article_num}条`;
+      if (a.status === 'done') {
+        return `<div class="audio-article-item" id="audio-art-${a.article_num}">
+          <span class="audio-article-label">${label}</span>
+          <button class="audio-gen-btn done" onclick="playArticleAudio('${a.url}',${a.article_num})">▶ 再生</button>
+        </div>`;
+      } else if (a.status === 'running') {
+        return `<div class="audio-article-item" id="audio-art-${a.article_num}">
+          <span class="audio-article-label">${label}</span>
+          <button class="audio-gen-btn running" disabled>生成中...</button>
+        </div>`;
+      } else {
+        const topicTitle = t.topic_title.replace(/'/g, "\\'");
+        return `<div class="audio-article-item" id="audio-art-${a.article_num}">
+          <span class="audio-article-label">${label}</span>
+          <button class="audio-gen-btn idle" onclick="generateArticleAudio(${a.article_num},'${topicTitle}',this)">生成</button>
+        </div>`;
+      }
+    }).join('');
+
+    return `<div class="audio-topic-group">
+      <div class="audio-topic-header">
+        <span class="audio-topic-num">${t.topic_num}</span>
+        <span class="audio-topic-title">${t.topic_title}</span>
+      </div>
+      <div class="audio-articles">${articlesHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+async function generateArticleAudio(articleNum, topicTitle, btn) {
+  btn.textContent = '生成中...';
+  btn.className = 'audio-gen-btn running';
+  btn.disabled = true;
+
+  await fetch('/api/audio/generate', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ article_num: articleNum, topic_title: topicTitle })
+  });
+
+  if (audioPollers[articleNum]) clearInterval(audioPollers[articleNum]);
+  audioPollers[articleNum] = setInterval(async () => {
+    const res = await fetch(`/api/audio/status?article_num=${articleNum}`);
+    const d = await res.json();
+    if (d.status === 'done') {
+      clearInterval(audioPollers[articleNum]);
+      delete audioPollers[articleNum];
+      btn.textContent = '▶ 再生';
+      btn.className = 'audio-gen-btn done';
+      btn.disabled = false;
+      btn.onclick = () => playArticleAudio(d.url, articleNum);
+    } else if (d.status && d.status.startsWith('error')) {
+      clearInterval(audioPollers[articleNum]);
+      delete audioPollers[articleNum];
+      btn.textContent = '再試行';
+      btn.className = 'audio-gen-btn idle';
+      btn.disabled = false;
+      btn.onclick = () => generateArticleAudio(articleNum, topicTitle, btn);
+    }
+  }, 5000);
+}
+
+function playArticleAudio(url, articleNum) {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  currentAudio = new Audio(url);
+  currentAudio.play();
+
+  const btn = document.querySelector(`#audio-art-${articleNum} .audio-gen-btn`);
+  if (btn) {
+    btn.textContent = '⏸ 停止';
+    currentAudio.onended = () => { btn.textContent = '▶ 再生'; };
+    btn.onclick = () => {
+      currentAudio.pause(); currentAudio = null;
+      btn.textContent = '▶ 再生';
+      btn.onclick = () => playArticleAudio(url, articleNum);
+    };
+  }
+}
+
+// ────────────────────────────────────────────────
+// クロスナビゲーション
+// ────────────────────────────────────────────────
+async function jumpToAudio(book, part, chapter) {
+  switchTab('audio');
+  const toc = await loadAudioToc();
+  const volData = toc.find(v => v.volume === book);
+  if (!volData) return;
+
+  // 巻ボタン選択
+  const volBtns = document.querySelectorAll('#audio-vol-row .audio-sel-btn');
+  const volBtn = volBtns[book - 1];
+  if (volBtn) await selectAudioVol(book, volBtn);
+
+  // 部ボタン選択
+  const partData = volData.parts.find(p => p.part === part);
+  if (!partData) return;
+  const partBtns = document.querySelectorAll('#audio-part-row .audio-sel-btn');
+  const partBtn = Array.from(partBtns).find(b => b.textContent === `第${part}部`);
+  if (partBtn) await selectAudioPart(book, partData, partBtn);
+
+  // 章ボタン選択
+  const chapBtns = document.querySelectorAll('#audio-chap-row .audio-sel-btn');
+  const chapBtn = Array.from(chapBtns).find(b => b.textContent === `第${chapter}章`);
+  if (chapBtn) await selectAudioChapter(book, part, chapter, chapBtn);
+}
+
+function jumpToLib(vol, part, chapter) {
+  // audio book=vol は 1:1 マッピング
+  const tree = TREE;
+  let label = '';
+  for (const bk of tree) {
+    if (bk.book !== vol) continue;
+    for (const pt of bk.parts) {
+      if (pt.part !== part) continue;
+      for (const [ch, name] of pt.chapters) {
+        if (ch === chapter) { label = name; break; }
+      }
+    }
+  }
+  switchTab('lib');
+  if (label) selectChapter(vol, part, chapter, label);
+}
+
+// タブ切替時に初期化
+document.addEventListener('DOMContentLoaded', () => {
+  const origSwitch = window.switchTab;
+  window.switchTab = function(id) {
+    origSwitch(id);
+    if (id === 'audio' && !audioToc) {
+      loadAudioToc().then(async () => {
+        const volBtn = document.querySelector('#audio-vol-row .audio-sel-btn');
+        await selectAudioVol(1, volBtn);
+        // 第1部を自動選択
+        const partBtn = document.querySelector('#audio-part-row .audio-sel-btn');
+        if (partBtn) {
+          const toc = await loadAudioToc();
+          const partData = toc.find(v => v.volume === 1)?.parts[0];
+          if (partData) {
+            await selectAudioPart(1, partData, partBtn);
+            // 第1章を自動選択
+            const chapBtn = document.querySelector('#audio-chap-row .audio-sel-btn');
+            if (chapBtn) await selectAudioChapter(1, partData.part, partData.chapters[0].chapter, chapBtn);
+          }
+        }
+      });
+    }
+  };
+});
 </script>
 </body>
 </html>
