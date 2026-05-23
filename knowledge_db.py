@@ -273,12 +273,23 @@ def migrate_topics():
 
 def insert_question(unit, law, question_num, question_text, answer, explanation, exam_source="", book=0, part=0, chapter=0, topic=""):
     with get_conn() as conn:
-        conn.execute(
-            """INSERT INTO questions
-               (unit, law, question_num, question_text, answer, explanation, exam_source, book, part, chapter, topic)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (unit, law, question_num, question_text, answer, explanation, exam_source, book, part, chapter, topic)
-        )
+        existing = conn.execute(
+            "SELECT id FROM questions WHERE unit=? AND question_num=?", (unit, question_num)
+        ).fetchone()
+        if existing:
+            conn.execute(
+                """UPDATE questions SET law=?, question_text=?, answer=?, explanation=?,
+                   exam_source=?, book=?, part=?, chapter=?, topic=?
+                   WHERE unit=? AND question_num=?""",
+                (law, question_text, answer, explanation, exam_source, book, part, chapter, topic, unit, question_num)
+            )
+        else:
+            conn.execute(
+                """INSERT INTO questions
+                   (unit, law, question_num, question_text, answer, explanation, exam_source, book, part, chapter, topic)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (unit, law, question_num, question_text, answer, explanation, exam_source, book, part, chapter, topic)
+            )
 
 
 def get_drill_questions(book: int, part: int, chapter: int) -> list:
