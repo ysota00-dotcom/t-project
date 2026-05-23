@@ -836,6 +836,25 @@ textarea { resize: vertical; min-height: 80px; }
   box-shadow:0 1px 2px rgba(0,0,0,0.05);
 }
 .audio-article-label { flex:1; font-size:13px; color:#333; }
+.audio-continuous-bar {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 12px; background:#e8f0f8;
+  border-radius:8px; margin:8px 12px 4px; flex-shrink:0;
+}
+.audio-cont-play-btn {
+  padding:6px 14px; border-radius:6px; border:none; cursor:pointer;
+  background:#3d5a80; color:white; font-size:13px; white-space:nowrap;
+}
+.audio-cont-play-btn:disabled { background:#aaa; cursor:default; }
+.audio-cont-status { flex:1; font-size:12px; color:#3d5a80; }
+.audio-cont-stop-btn {
+  padding:6px 12px; border-radius:6px; border:none; cursor:pointer;
+  background:#c0392b; color:white; font-size:13px;
+}
+.audio-now-playing {
+  background:#dbe9f8 !important;
+  border-left:3px solid #3d5a80;
+}
 </style>
 </head>
 <body>
@@ -2642,6 +2661,9 @@ let audioState = { volume: 1, part: null, chapter: null };
 let audioToc = null;
 let audioPollers = {};  // article_num → intervalId
 let currentAudio = null;
+let continuousMode = false;
+let continuousQueue = [];  // [{url, articleNum, label}]
+let continuousIndex = 0;
 
 async function loadAudioToc() {
   if (audioToc) return audioToc;
@@ -2729,6 +2751,26 @@ function renderAudioTopics(topics) {
     return;
   }
 
+  // 連続再生キューを構築（done な条文のみ、トピック順・条文順）
+  continuousQueue = [];
+  topics.forEach(t => {
+    if (!t.articles) return;
+    t.articles.forEach(a => {
+      if (a.status === 'done') {
+        const label = a.article_title ? `第${a.article_num}条【${a.article_title}】` : `第${a.article_num}条`;
+        continuousQueue.push({ url: a.url, articleNum: a.article_num, label });
+      }
+    });
+  });
+  continuousMode = false;
+  continuousIndex = 0;
+
+  // 連続再生バーを topic-list の直前に挿入
+  const existingBar = document.getElementById('audio-cont-bar');
+  if (existingBar) existingBar.remove();
+  list.insertAdjacentHTML('beforebegin', '<div class="audio-continuous-bar" id="audio-cont-bar"></div>');
+  updateContinuousBar();
+
   list.innerHTML = topics.map(t => {
     // 条文がないトピックは見出しのみ
     if (!t.articles || !t.articles.length) {
@@ -2806,6 +2848,7 @@ async function generateArticleAudio(articleNum, topicTitle, btn) {
 }
 
 function playArticleAudio(url, articleNum) {
+  stopContinuousPlay();  // 連続モード中断
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
   currentAudio = new Audio(url);
   currentAudio.play();
@@ -2819,6 +2862,66 @@ function playArticleAudio(url, articleNum) {
       btn.textContent = '▶ 再生';
       btn.onclick = () => playArticleAudio(url, articleNum);
     };
+  }
+}
+
+function startContinuousPlay() {
+  if (!continuousQueue.length) return;
+  stopContinuousPlay();
+  continuousMode = true;
+  continuousIndex = 0;
+  playNextInQueue();
+}
+
+function playNextInQueue() {
+  if (!continuousMode || continuousIndex >= continuousQueue.length) {
+    finishContinuousPlay(); return;
+  }
+  const { url, articleNum, label } = continuousQueue[continuousIndex];
+
+  document.querySelectorAll('.audio-now-playing').forEach(el => el.classList.remove('audio-now-playing'));
+  const row = document.getElementById(`audio-art-${articleNum}`);
+  if (row) { row.classList.add('audio-now-playing'); row.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+
+  updateContinuousBar(label);
+
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  currentAudio = new Audio(url);
+  currentAudio.play();
+  currentAudio.onended = () => {
+    if (continuousMode) { continuousIndex++; playNextInQueue(); }
+  };
+}
+
+function stopContinuousPlay() {
+  continuousMode = false;
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  document.querySelectorAll('.audio-now-playing').forEach(el => el.classList.remove('audio-now-playing'));
+  updateContinuousBar();
+}
+
+function finishContinuousPlay() {
+  continuousMode = false;
+  currentAudio = null;
+  document.querySelectorAll('.audio-now-playing').forEach(el => el.classList.remove('audio-now-playing'));
+  const bar = document.getElementById('audio-cont-bar');
+  if (bar) bar.innerHTML = `<span class="audio-cont-status">✅ 章の再生が完了しました</span>`;
+}
+
+function updateContinuousBar(currentLabel) {
+  const bar = document.getElementById('audio-cont-bar');
+  if (!bar) return;
+  const total = continuousQueue.length;
+  if (continuousMode && currentLabel) {
+    bar.innerHTML = `
+      <span class="audio-cont-status">▶ ${currentLabel} 再生中&nbsp;&nbsp;${continuousIndex + 1} / ${total}</span>
+      <button class="audio-cont-stop-btn" onclick="stopContinuousPlay()">⏹ 停止</button>`;
+  } else if (total === 0) {
+    bar.innerHTML = `<button class="audio-cont-play-btn" disabled>▶▶ 章を連続再生</button>
+      <span class="audio-cont-status" style="color:#aaa">生成済みの条文がありません</span>`;
+  } else {
+    bar.innerHTML = `<button class="audio-cont-play-btn" onclick="startContinuousPlay()">▶▶ 章を連続再生</button>
+      <span class="audio-cont-status">生成済み ${total} 件</span>`;
   }
 }
 
