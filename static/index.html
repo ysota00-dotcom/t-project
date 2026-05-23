@@ -1138,7 +1138,7 @@ function switchTab(id) {
   })
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'))
   document.getElementById('panel-' + id).classList.add('active')
-  if (id === 'lib') loadQuestions()
+  if (id === 'lib') { initTree(); loadQuestions() }
   if (id === 'drill') renderDrillTree()
   if (id === 'schedule') renderSchedule()
   if (id === 'pastexam') loadPastExam()
